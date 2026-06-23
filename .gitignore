@@ -1,0 +1,11 @@
+node_modules/
+*.log
+.env
+.env.local
+
+# Local-first SQLite store (ADR-0005) — never commit run data
+data/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm

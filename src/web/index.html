@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrandScout</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="logo">◎</span> BrandScout
+      <span class="sub">scouting de branding multi-sources</span>
+    </div>
+    <nav>
+      <button id="tab-launch" class="tab active">Lancer un Run</button>
+      <button id="tab-reports" class="tab">Reports</button>
+    </nav>
+    <div id="modeBadge" class="mode-badge" title="Mode d'execution"></div>
+  </header>
+
+  <main>
+    <!-- ECRAN 1 : Lancer un Run -->
+    <section id="screen-launch" class="screen">
+      <div class="col">
+        <h2>Brand</h2>
+        <div class="row">
+          <select id="brandSelect"></select>
+          <button id="seedBtn" class="ghost" title="Creer la Brand de demonstration">Seed demo</button>
+        </div>
+        <div class="row">
+          <input id="newBrandName" type="text" placeholder="Nouvelle Brand…" />
+          <button id="addBrandBtn">Ajouter</button>
+        </div>
+
+        <h2>Sources de collecte</h2>
+        <p class="hint">Seed Source = un endroit connu (on collecte tout). Keyword Query = un terme dont on collecte les mentions. L'outil ne devine jamais quoi chercher.</p>
+        <table id="targetsTable" class="targets">
+          <thead><tr><th>Mode</th><th>Connecteur</th><th>Valeur</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <div class="add-target">
+          <select id="tMode">
+            <option value="seed_source">Seed Source</option>
+            <option value="keyword_query">Keyword Query</option>
+          </select>
+          <select id="tConnector">
+            <option value="reddit">Reddit</option>
+            <option value="youtube">YouTube</option>
+          </select>
+          <input id="tValue" type="text" placeholder="subreddit / chaine / mot-cle" />
+          <button id="addTargetBtn">+ Ajouter</button>
+        </div>
+        <div id="targetErr" class="err"></div>
+
+        <div class="launch">
+          <button id="launchBtn" class="primary">▶ Lancer le Run</button>
+          <span id="envelope" class="hint"></span>
+        </div>
+      </div>
+
+      <div class="col">
+        <h2>Journal du Run</h2>
+        <pre id="runLog" class="log">Aucun Run en cours.</pre>
+      </div>
+    </section>
+
+    <!-- ECRAN 2 : Reports -->
+    <section id="screen-reports" class="screen hidden">
+      <div class="col runs">
+        <h2>Runs</h2>
+        <ul id="runsList" class="runs-list"></ul>
+      </div>
+      <div class="col report">
+        <div id="reportView"><p class="hint">Selectionne un Run.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

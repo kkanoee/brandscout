@@ -1,0 +1,25 @@
+{
+  "name": "brandscout",
+  "version": "1.0.0",
+  "description": "Scouting de branding multi-sources : un Run d'une Brand -> un Report dense et tracable. v1 YouTube + Reddit, on-demand, mono-utilisateur.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "scripts": {
+    "start": "node src/server/server.ts",
+    "dev": "node --watch src/server/server.ts",
+    "run:cli": "node src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/**/*.test.ts\""
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.13.0",
+    "typescript": "^5.7.3"
+  }
+}

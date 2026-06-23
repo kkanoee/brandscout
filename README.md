@@ -43,22 +43,65 @@ Un **Run** prend une **Brand** (+ ses sources fournies par l'utilisateur), colle
 
 Indépendance (v1) : 1 auteur = 1 voix ; repost/citation de la même origine = 1 voix.
 
-## Plan d'implémentation (étapes)
+## Démarrage rapide
+
+```bash
+npm install                 # better-sqlite3 (natif) + types
+cp .env.example .env        # optionnel : sans clé, tout tourne en mode fixtures
+
+npm start                   # web app -> http://localhost:4317
+```
+
+Puis dans l'app : **Seed demo** crée la Brand *Chart Fanatics* (+ ses sources), **Lancer le Run**, puis l'onglet **Reports** affiche le rapport (chaque Finding se déplie jusqu'aux Posts).
+
+En ligne de commande (debug / étape 8) :
+
+```bash
+node src/cli.ts run "Chart Fanatics"   # collecte -> Report en console
+npm test                               # invariants de Confidence + e2e
+npm run typecheck                      # tsc --noEmit (strict)
+```
+
+### Modes d'exécution (`BRANDSCOUT_MODE`)
+- **`auto`** (défaut) : appels réels si les clés existent, sinon bascule par sous-système sur des **fixtures**/mocks déterministes. Permet de tout faire tourner hors-ligne.
+- **`live`** : exige les clés (OpenRouter, Anthropic, YouTube, Reddit).
+- **`fixtures`** : force le hors-ligne (données locales dans `fixtures/`).
+
+Le mode fixtures exerce **toute la logique du pipeline** (pré-filtre, regroupement, plafond de Confidence, assemblage du Report, persistance, UI) ; seuls les appels réseau externes sont stubés. Passer en `live` = renseigner les clés, aucune autre modif (l'abstraction du routeur LLM et des connecteurs est swappable — ADR-0002).
+
+## Architecture (TypeScript, exécuté nativement par Node ≥ 22.6, type-stripping)
+
+```
+src/
+  config.ts            config centrale (.env, ids de modèles, seuils — jamais en dur)
+  domain/types.ts      modèle de domaine (vocabulaire de CONTEXT.md)
+  db/                  schema.sql + repository SQLite (better-sqlite3)
+  llm/                 routeur 2 étages (router.ts) + providers mock (mock.ts)
+  connectors/          interface + youtube.ts, reddit.ts + fixtures.ts
+  pipeline/            prefilter -> extract -> synthesize -> confidence -> report -> run (orchestrateur)
+  server/              api.ts (logique) + server.ts (HTTP node:http)
+  web/                 frontend natif (index.html, app.js, style.css) — 2 écrans
+fixtures/              jeux de données Chart Fanatics (reddit/, youtube/)
+tests/                 confidence (invariants ADR-0003/0004) + e2e
+```
+
+## Plan d'implémentation (étapes) — **v1 terminée**
 
 L'ordre suit la chaîne de valeur : prouver d'abord qu'**un** Report est bon, brancher l'UI ensuite.
 
-- [ ] **Étape 0 — Socle.** Init projet TS (Node + frontend), SQLite via `better-sqlite3`, schéma initial (Brand, Seed Source, Keyword Query, Run, Post, Observation, Finding, Source-link), gestion des clés API/secrets (`.env`).
-- [ ] **Étape 1 — Routeur LLM.** Abstraction à 2 étages (owl-alpha via OpenRouter / Opus via Anthropic), id de modèle en config, jamais en dur. ([ADR-0002](./docs/adr/0002-two-tier-llm-routing.md))
-- [ ] **Étape 2 — Connecteur YouTube (Seed Source).** Lire les commentaires d'une chaîne sur 6 mois, plafond + pré-filtre déterministe, persister les Posts.
-- [ ] **Étape 3 — Connecteur Reddit (Keyword Query + Seed Source).** Recherche mot-clé + subreddit, mêmes garde-fous, persister.
-- [ ] **Étape 4 — Extraction.** Posts → Observations via l'étage mécanique (owl-alpha).
-- [ ] **Étape 5 — Synthèse + Confidence.** Observations → Findings via l'étage jugement (Opus), avec le plafond de preuve appliqué comme **contrainte dure** (le barème calcule le tier ; le LLM décrit à l'intérieur). ([ADR-0003](./docs/adr/0003-evidence-caps-confidence.md))
-- [ ] **Étape 6 — Report.** Génération du document structuré (sections : perception, points forts, critiques, thèmes, opportunités), chaque Finding dépliable jusqu'aux Posts.
-- [ ] **Étape 7 — Web app.** Écran 1 (lancer un Run) + écran 2 (lire un Report + liste des Runs). Mono-user, sans auth. ([ADR-0006](./docs/adr/0006-v1-thin-mono-user-web-app.md))
-- [ ] **Étape 8 — Bout-en-bout.** Premier Run réel sur Chart Fanatics, vérifier la traçabilité et la justesse des tiers de confiance.
+- [x] **Étape 0 — Socle.** Projet TS (Node + frontend), SQLite via `better-sqlite3`, schéma complet (Brand, Collection Target, Run, Post, Observation, Finding, table de liaison, Report), secrets via `.env`.
+- [x] **Étape 1 — Routeur LLM.** Abstraction à 2 étages (owl-alpha via OpenRouter / Opus via Anthropic), id de modèle en config, jamais en dur ; provider mock pour le hors-ligne. ([ADR-0002](./docs/adr/0002-two-tier-llm-routing.md))
+- [x] **Étape 2 — Connecteur YouTube (Seed Source).** Commentaires d'une chaîne sur la fenêtre, plafond + pré-filtre déterministe, persistance.
+- [x] **Étape 3 — Connecteur Reddit (Keyword Query + Seed Source).** Recherche mot-clé + subreddit, mêmes garde-fous, persistance.
+- [x] **Étape 4 — Extraction.** Posts → Observations via l'étage mécanique.
+- [x] **Étape 5 — Synthèse + Confidence.** Observations → Findings via l'étage jugement, le barème calcule le tier comme **contrainte dure** ; le LLM décrit à l'intérieur. ([ADR-0003](./docs/adr/0003-evidence-caps-confidence.md))
+- [x] **Étape 6 — Report.** Document structuré (perception, points forts, critiques, thèmes, opportunités), chaque Finding dépliable jusqu'aux Posts.
+- [x] **Étape 7 — Web app.** Écran 1 (lancer un Run) + écran 2 (lire un Report + liste des Runs). Mono-user, sans auth. ([ADR-0006](./docs/adr/0006-v1-thin-mono-user-web-app.md))
+- [x] **Étape 8 — Bout-en-bout.** Run validé sur Chart Fanatics (mode fixtures) : traçabilité Finding→Observation→Post et justesse des trois tiers vérifiées par les tests. Le run *réel* ne demande que les clés API.
 
-## Décisions de conception restant à trancher (au moment de coder)
-- Schéma SQLite précis (clés, index, relation Finding ↔ Observations ↔ Sources).
-- Mécanisme de regroupement des Observations en Findings (par thème ? clustering ? prompt de synthèse ?).
-- Format exact de définition d'une Brand + ses seeds/queries (table en base, éditée via l'écran 1).
-- Sections exactes et gabarit du Report.
+## Décisions de conception (tranchées à l'implémentation)
+- **Schéma SQLite** : voir [src/db/schema.sql](./src/db/schema.sql). La « source » de corroboration est `post.source_key` (`r/<subreddit>` ou `yt/<chaîne>`) ; deux subreddits = deux sources distinctes (ADR-0004). Liaison `finding_observation` pour la traçabilité.
+- **Regroupement Observations → Findings** : par **thème normalisé** issu de l'étage mécanique (déterministe, traçable). Le clustering sémantique fin est repoussé en v2.
+- **Confidence** : calculée par [src/pipeline/confidence.ts](./src/pipeline/confidence.ts) à partir d'auteurs distincts + sources distinctes ; le LLM ne fixe jamais le tier.
+- **Définition d'une Brand** : tables `brand` + `collection_target`, éditées via l'écran 1.
+- **Sections du Report** : perception (vue d'ensemble), points forts, critiques, thèmes, opportunités (ces dernières inférées → tier *Intuition*).
