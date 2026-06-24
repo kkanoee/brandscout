@@ -38,7 +38,7 @@ async function readBody(req: IncomingMessage): Promise<any> {
   try {
     return raw ? JSON.parse(raw) : {};
   } catch {
-    throw new HttpError(400, "Corps JSON invalide.");
+    throw new HttpError(400, "Invalid JSON body.");
   }
 }
 
@@ -98,11 +98,11 @@ async function handleApi(
   }
   if (method === "POST" && path === "/api/runs") {
     const body = await readBody(req);
-    if (!body.brandId) throw new HttpError(400, "brandId requis.");
+    if (!body.brandId) throw new HttpError(400, "brandId required.");
     return sendJson(res, 202, api.startRun(Number(body.brandId)));
   }
 
-  throw new HttpError(404, "Route inconnue.");
+  throw new HttpError(404, "Unknown route.");
 }
 
 const server = createServer(async (req, res) => {

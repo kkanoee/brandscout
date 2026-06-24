@@ -34,6 +34,10 @@ export const config = {
   llm: {
     mechanicalModel: str("LLM_MECHANICAL_MODEL", "openrouter/owl-alpha"),
     judgmentModel: str("LLM_JUDGMENT_MODEL", "claude-opus-4-8"),
+    // Backend du jugement : auto | anthropic | openrouter | mock (cf. router.ts).
+    judgmentProvider: str("LLM_JUDGMENT_PROVIDER", "auto"),
+    // Modele OpenRouter utilise si le jugement passe en mode gratuit.
+    judgmentOpenrouterModel: str("LLM_JUDGMENT_OPENROUTER_MODEL", "openrouter/owl-alpha"),
     openrouterApiKey: str("OPENROUTER_API_KEY"),
     anthropicApiKey: str("ANTHROPIC_API_KEY"),
   },

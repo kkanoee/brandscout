@@ -31,14 +31,19 @@ export interface LlmProvider {
 
 export type ProviderKind = "openrouter" | "anthropic" | "mock";
 
-// --- OpenRouter (etage mecanique) --------------------------------------------
+// --- OpenRouter (etage mecanique, ou jugement en mode gratuit) ----------------
+// Peut servir les DEUX etages : owl-alpha est gratuit, et comme le tier de
+// Confidence est calcule par du code deterministe (confidence.ts), un modele
+// gratuit au jugement ne peut pas surclasser un Finding — il ne fait que rediger
+// la prose dans le plafond. Option "gratuit pour la v1" (voir README).
 class OpenRouterProvider implements LlmProvider {
-  readonly stage = "mechanical" as const;
+  readonly stage: "mechanical" | "judgment";
   readonly model: string;
   private readonly apiKey: string;
-  constructor(model: string, apiKey: string) {
+  constructor(model: string, apiKey: string, stage: "mechanical" | "judgment" = "mechanical") {
     this.model = model;
     this.apiKey = apiKey;
+    this.stage = stage;
   }
 
   async complete(req: LlmRequest): Promise<string> {
@@ -121,12 +126,41 @@ export function getMechanical(): LlmProvider {
   return mechanical;
 }
 
+// Backend de l'etage jugement, selectionnable (LLM_JUDGMENT_PROVIDER) :
+//   anthropic  : Claude (qualite max, ~quelques centimes/Run)
+//   openrouter : modele gratuit owl-alpha (cout zero ; le plafond de Confidence
+//                reste garanti par le code, cf. confidence.ts)
+//   mock       : hors-ligne deterministe
+//   auto (def) : anthropic si cle Anthropic, sinon openrouter si cle OpenRouter,
+//                sinon mock
 export function getJudgment(): LlmProvider {
   if (judgment) return judgment;
-  const live = effectiveMode(!!config.llm.anthropicApiKey) === "live";
-  judgment = live
-    ? new AnthropicProvider(config.llm.judgmentModel, config.llm.anthropicApiKey)
-    : new MockJudgmentProvider(config.llm.judgmentModel);
+
+  // Mode fixtures = entierement hors-ligne : le jugement reste mock.
+  if (config.mode === "fixtures") {
+    judgment = new MockJudgmentProvider(config.llm.judgmentModel);
+    return judgment;
+  }
+
+  const hasAnthropic = !!config.llm.anthropicApiKey;
+  const hasOpenrouter = !!config.llm.openrouterApiKey;
+
+  let backend = config.llm.judgmentProvider;
+  if (backend === "auto") {
+    backend = hasAnthropic ? "anthropic" : hasOpenrouter ? "openrouter" : "mock";
+  }
+
+  if (backend === "anthropic" && hasAnthropic) {
+    judgment = new AnthropicProvider(config.llm.judgmentModel, config.llm.anthropicApiKey);
+  } else if (backend === "openrouter" && hasOpenrouter) {
+    judgment = new OpenRouterProvider(
+      config.llm.judgmentOpenrouterModel,
+      config.llm.openrouterApiKey,
+      "judgment",
+    );
+  } else {
+    judgment = new MockJudgmentProvider(config.llm.judgmentModel);
+  }
   return judgment;
 }
 

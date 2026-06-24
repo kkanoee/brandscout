@@ -3,6 +3,11 @@ node_modules/
 .env
 .env.local
 
+# Secrets / credentials — NE JAMAIS commiter
+client_secret*.json
+*credentials*.json
+*.pem
+
 # Local-first SQLite store (ADR-0005) — never commit run data
 data/
 *.sqlite

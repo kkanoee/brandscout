@@ -12,10 +12,10 @@ const api = {
 const state = { brands: [], brandId: null, pollTimer: null, currentRunId: null };
 
 const SECTION_LABELS = {
-  strengths: "Points forts",
+  strengths: "Strengths",
   critiques: "Critiques",
   themes: "Themes",
-  opportunities: "Opportunites",
+  opportunities: "Opportunities",
 };
 const SECTION_ORDER = ["strengths", "critiques", "themes", "opportunities"];
 const MODE_LABEL = { seed_source: "Seed Source", keyword_query: "Keyword Query" };
@@ -34,7 +34,7 @@ function switchTab(name) {
 async function loadConfig() {
   const c = await api.get("/api/config");
   $("#modeBadge").textContent = `mode: ${c.mode} · ${c.mechanicalModel} / ${c.judgmentModel}`;
-  $("#envelope").textContent = `fenetre ${c.windowMonths} mois · plafond ${c.volumeCap} posts/source`;
+  $("#envelope").textContent = `window ${c.windowMonths} months · cap ${c.volumeCap} posts/source`;
 }
 
 // --- Brands ------------------------------------------------------------------
@@ -87,9 +87,9 @@ function renderTargets() {
 }
 $("#addTargetBtn").onclick = async () => {
   $("#targetErr").textContent = "";
-  if (!state.brandId) { $("#targetErr").textContent = "Cree d'abord une Brand."; return; }
+  if (!state.brandId) { $("#targetErr").textContent = "Create a Brand first."; return; }
   const value = $("#tValue").value.trim();
-  if (!value) { $("#targetErr").textContent = "Valeur requise."; return; }
+  if (!value) { $("#targetErr").textContent = "Value required."; return; }
   try {
     await api.post(`/api/brands/${state.brandId}/targets`, {
       mode: $("#tMode").value, connector: $("#tConnector").value, value,
@@ -101,13 +101,13 @@ $("#addTargetBtn").onclick = async () => {
 
 // --- Lancer un Run -----------------------------------------------------------
 $("#launchBtn").onclick = async () => {
-  if (!state.brandId) { $("#targetErr").textContent = "Selectionne une Brand."; return; }
-  $("#runLog").textContent = "Demarrage…";
+  if (!state.brandId) { $("#targetErr").textContent = "Select a Brand."; return; }
+  $("#runLog").textContent = "Starting…";
   try {
     const { runId } = await api.post("/api/runs", { brandId: state.brandId });
     state.currentRunId = runId;
     pollRun(runId);
-  } catch (e) { $("#runLog").textContent = "Erreur: " + e.message; }
+  } catch (e) { $("#runLog").textContent = "Error: " + e.message; }
 };
 
 function pollRun(runId) {
@@ -121,10 +121,10 @@ function pollRun(runId) {
         clearInterval(state.pollTimer);
         await loadBrands(state.brandId);
         if (detail.run.status === "done") {
-          $("#runLog").textContent += "\n\n✓ Termine. Voir l'onglet Reports.";
+          $("#runLog").textContent += "\n\n✓ Done. See the Reports tab.";
         }
       }
-    } catch (e) { clearInterval(state.pollTimer); $("#runLog").textContent += "\nErreur: " + e.message; }
+    } catch (e) { clearInterval(state.pollTimer); $("#runLog").textContent += "\nError: " + e.message; }
   }, 600);
 }
 
@@ -133,7 +133,7 @@ async function loadRuns() {
   const runs = await api.get("/api/runs");
   const ul = $("#runsList");
   ul.innerHTML = "";
-  if (!runs.length) { ul.innerHTML = '<p class="hint">Aucun Run. Lance-en un.</p>'; return; }
+  if (!runs.length) { ul.innerHTML = '<p class="hint">No runs yet. Launch one.</p>'; return; }
   for (const r of runs) {
     const li = document.createElement("li");
     li.dataset.id = r.id;
@@ -152,11 +152,11 @@ async function selectRun(runId) {
   const v = $("#reportView");
   if (d.run.status === "error") {
     v.innerHTML = `<div class="report-head"><h1>${escapeHtml(d.run.brandName)}</h1></div>
-      <p class="err">Run en erreur : ${escapeHtml(d.run.error || "inconnue")}</p>`;
+      <p class="err">Run failed: ${escapeHtml(d.run.error || "unknown error")}</p>`;
     return;
   }
   if (d.run.status !== "done") {
-    v.innerHTML = `<p class="hint">Run #${runId} en cours (${d.run.status})… reviens dans un instant.</p>`;
+    v.innerHTML = `<p class="hint">Run #${runId} in progress (${d.run.status})… check back in a moment.</p>`;
     return;
   }
   const s = d.run.stats || {};
@@ -165,7 +165,7 @@ async function selectRun(runId) {
       <h1>${escapeHtml(d.run.brandName)}</h1>
       <div class="report-stats">
         <span>Run #${d.run.id}</span>
-        <span>${s.collected ?? 0} posts collectes · ${s.kept ?? 0} gardes · ${s.filtered ?? 0} ecartes</span>
+        <span>${s.collected ?? 0} posts collected · ${s.kept ?? 0} kept · ${s.filtered ?? 0} filtered</span>
         <span>${s.observations ?? 0} observations · ${s.findings ?? 0} findings</span>
       </div>
     </div>`;
@@ -183,7 +183,7 @@ async function selectRun(runId) {
 function renderFinding(f) {
   const obs = f.observations.map((o) => {
     const p = o.post;
-    const link = p ? `<a href="${escapeAttr(p.url)}" target="_blank" rel="noopener">${escapeHtml(p.sourceKey)} · ${escapeHtml(p.author)}</a>` : "source inconnue";
+    const link = p ? `<a href="${escapeAttr(p.url)}" target="_blank" rel="noopener">${escapeHtml(p.sourceKey)} · ${escapeHtml(p.author)}</a>` : "unknown source";
     const date = p && p.publishedAt ? new Date(p.publishedAt).toLocaleDateString() : "";
     return `<div class="obs">
         <div class="claim">${escapeHtml(o.claim)}<span class="sent ${o.sentiment}">${o.sentiment}</span></div>
@@ -196,11 +196,11 @@ function renderFinding(f) {
       <summary>
         <span class="badge ${f.confidence}">${f.confidenceLabel}</span>
         <span class="stmt">${escapeHtml(f.statement)}</span>
-        <span class="evid">${f.distinctAuthors} auteur(s) / ${f.distinctSources} source(s)</span>
+        <span class="evid">${f.distinctAuthors} author(s) / ${f.distinctSources} source(s)</span>
       </summary>
       <div class="obs-list">
         ${f.rationale ? `<div class="rationale">${escapeHtml(f.rationale)}</div>` : ""}
-        ${obs || '<p class="hint">Aucune observation liee.</p>'}
+        ${obs || '<p class="hint">No linked observation.</p>'}
       </div>
     </details>`;
 }

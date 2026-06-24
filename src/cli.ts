@@ -12,10 +12,10 @@ import type { ReportSection } from "./domain/types.ts";
 
 const SECTION_LABEL: Record<ReportSection, string> = {
   perception: "Perception",
-  strengths: "Points forts",
+  strengths: "Strengths",
   critiques: "Critiques",
   themes: "Themes",
-  opportunities: "Opportunites",
+  opportunities: "Opportunities",
 };
 
 async function main(): Promise<void> {
@@ -63,7 +63,7 @@ function printReport(runId: number): void {
   console.log("=".repeat(70));
   if (run.stats) {
     const s = run.stats;
-    console.log(`Posts: ${s.collected} collectes / ${s.kept} gardes / ${s.filtered} ecartes`);
+    console.log(`Posts: ${s.collected} collected / ${s.kept} kept / ${s.filtered} filtered`);
     console.log(`Observations: ${s.observations} | Findings: ${s.findings}\n`);
   }
   if (report) console.log("PERCEPTION\n  " + report.overview + "\n");
@@ -75,7 +75,7 @@ function printReport(runId: number): void {
     console.log(`\n## ${SECTION_LABEL[section]}`);
     for (const f of items) {
       console.log(`  [${TIER_LABEL[f.confidence]}] ${f.statement}`);
-      console.log(`     preuve: ${f.distinctAuthors} auteur(s) / ${f.distinctSources} source(s)`);
+      console.log(`     evidence: ${f.distinctAuthors} author(s) / ${f.distinctSources} source(s)`);
     }
   }
   console.log("");

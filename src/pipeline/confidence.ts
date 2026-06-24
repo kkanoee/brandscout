@@ -57,8 +57,10 @@ export function cap(proposed: ConfidenceTier, allowed: ConfidenceTier): Confiden
   return ORDER[proposed] <= ORDER[allowed] ? proposed : allowed;
 }
 
+// Libelles affiches dans le Report (toujours en anglais, cf. preference produit).
+// Les codes internes (fait_verifie...) restent le vocabulaire du domaine (CONTEXT.md).
 export const TIER_LABEL: Record<ConfidenceTier, string> = {
-  fait_verifie: "Fait vérifié",
-  signal_probable: "Signal probable",
-  intuition: "Intuition",
+  fait_verifie: "Verified fact",
+  signal_probable: "Probable signal",
+  intuition: "Hunch",
 };

@@ -10,33 +10,33 @@
   <header>
     <div class="brand">
       <span class="logo">◎</span> BrandScout
-      <span class="sub">scouting de branding multi-sources</span>
+      <span class="sub">multi-source brand scouting</span>
     </div>
     <nav>
-      <button id="tab-launch" class="tab active">Lancer un Run</button>
+      <button id="tab-launch" class="tab active">Launch a Run</button>
       <button id="tab-reports" class="tab">Reports</button>
     </nav>
-    <div id="modeBadge" class="mode-badge" title="Mode d'execution"></div>
+    <div id="modeBadge" class="mode-badge" title="Execution mode"></div>
   </header>
 
   <main>
-    <!-- ECRAN 1 : Lancer un Run -->
+    <!-- SCREEN 1: Launch a Run -->
     <section id="screen-launch" class="screen">
       <div class="col">
         <h2>Brand</h2>
         <div class="row">
           <select id="brandSelect"></select>
-          <button id="seedBtn" class="ghost" title="Creer la Brand de demonstration">Seed demo</button>
+          <button id="seedBtn" class="ghost" title="Create the demo Brand">Seed demo</button>
         </div>
         <div class="row">
-          <input id="newBrandName" type="text" placeholder="Nouvelle Brand…" />
-          <button id="addBrandBtn">Ajouter</button>
+          <input id="newBrandName" type="text" placeholder="New Brand…" />
+          <button id="addBrandBtn">Add</button>
         </div>
 
-        <h2>Sources de collecte</h2>
-        <p class="hint">Seed Source = un endroit connu (on collecte tout). Keyword Query = un terme dont on collecte les mentions. L'outil ne devine jamais quoi chercher.</p>
+        <h2>Collection sources</h2>
+        <p class="hint">Seed Source = a known place (collect everything). Keyword Query = a term whose mentions are collected. The tool never guesses what to look for.</p>
         <table id="targetsTable" class="targets">
-          <thead><tr><th>Mode</th><th>Connecteur</th><th>Valeur</th><th></th></tr></thead>
+          <thead><tr><th>Mode</th><th>Connector</th><th>Value</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
 
@@ -49,31 +49,31 @@
             <option value="reddit">Reddit</option>
             <option value="youtube">YouTube</option>
           </select>
-          <input id="tValue" type="text" placeholder="subreddit / chaine / mot-cle" />
-          <button id="addTargetBtn">+ Ajouter</button>
+          <input id="tValue" type="text" placeholder="subreddit / channel / keyword" />
+          <button id="addTargetBtn">+ Add</button>
         </div>
         <div id="targetErr" class="err"></div>
 
         <div class="launch">
-          <button id="launchBtn" class="primary">▶ Lancer le Run</button>
+          <button id="launchBtn" class="primary">▶ Launch the Run</button>
           <span id="envelope" class="hint"></span>
         </div>
       </div>
 
       <div class="col">
-        <h2>Journal du Run</h2>
-        <pre id="runLog" class="log">Aucun Run en cours.</pre>
+        <h2>Run log</h2>
+        <pre id="runLog" class="log">No run in progress.</pre>
       </div>
     </section>
 
-    <!-- ECRAN 2 : Reports -->
+    <!-- SCREEN 2: Reports -->
     <section id="screen-reports" class="screen hidden">
       <div class="col runs">
         <h2>Runs</h2>
         <ul id="runsList" class="runs-list"></ul>
       </div>
       <div class="col report">
-        <div id="reportView"><p class="hint">Selectionne un Run.</p></div>
+        <div id="reportView"><p class="hint">Select a Run.</p></div>
       </div>
     </section>
   </main>

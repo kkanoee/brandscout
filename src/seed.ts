@@ -9,7 +9,7 @@ export function seedDemo(): Brand {
     repo.addTarget(brand.id, "seed_source", "reddit", "Daytrading", "r/Daytrading");
     repo.addTarget(brand.id, "seed_source", "reddit", "Forex", "r/Forex");
     repo.addTarget(brand.id, "keyword_query", "reddit", "Chart Fanatics", "mentions");
-    repo.addTarget(brand.id, "seed_source", "youtube", "Chart Fanatics", "Chaine YouTube");
+    repo.addTarget(brand.id, "seed_source", "youtube", "Chart Fanatics", "YouTube channel");
   }
   return brand;
 }

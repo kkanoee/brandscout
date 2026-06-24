@@ -16,11 +16,13 @@ import { repo } from "../db/db.ts";
 import { getJudgment, parseJson } from "../llm/router.ts";
 import { computeConfidence } from "./confidence.ts";
 
+// Le Report est TOUJOURS en anglais (preference produit) : on l'impose au modele.
 const SYSTEM =
-  "Tu es l'etage jugement d'un pipeline d'analyse de marque. Tu rediges des " +
-  "Findings (affirmations synthetiques) a partir de clusters d'Observations. " +
-  "IMPORTANT : tu ne decides PAS du niveau de confiance ; il est impose par la " +
-  "preuve. Tu decris seulement, sobrement et sans surenchere. Reponds en JSON.";
+  "You are the judgment stage of a brand-analysis pipeline. You write Findings " +
+  "(synthetic statements) from clusters of Observations. IMPORTANT: you do NOT " +
+  "decide the confidence level; it is fixed by the evidence. You only describe, " +
+  "soberly and without overstatement. ALWAYS write your output in English, no " +
+  "matter what language the input is in. Respond in JSON.";
 
 function dominantSentiment(obs: Observation[]): Sentiment {
   const counts: Record<Sentiment, number> = {
@@ -58,9 +60,9 @@ function buildPrompt(theme: string, sent: Sentiment, obs: Observation[]): string
   };
   return [
     "### TASK: synthesize",
-    "Redige UN Finding synthetique pour ce cluster (1-2 phrases factuelles).",
-    "Ne mentionne aucun niveau de confiance. Reste a l'interieur de ce que les observations disent.",
-    'Format: {"statement":"...","rationale":"..."}',
+    "Write ONE synthetic Finding for this cluster (1-2 factual sentences).",
+    "Do not mention any confidence level. Stay within what the observations say.",
+    "Write in English. Format: {\"statement\":\"...\",\"rationale\":\"...\"}",
     "### INPUT_JSON",
     JSON.stringify(input),
   ].join("\n");
@@ -96,7 +98,7 @@ export async function synthesize(
     try {
       out = parseJson<SynthOut>(raw);
     } catch {
-      out = { statement: `Theme « ${theme} » releve dans ${obs.length} observation(s).`, rationale: "" };
+      out = { statement: `Topic "${theme}" raised in ${obs.length} observation(s).`, rationale: "" };
     }
 
     const finding = repo.insertFinding(
@@ -104,7 +106,7 @@ export async function synthesize(
         runId,
         section: sectionFor(sent),
         theme,
-        statement: out.statement?.trim() || `Theme « ${theme} ».`,
+        statement: out.statement?.trim() || `Topic "${theme}".`,
         // Le tier vient de la preuve, pas du LLM (ADR-0003).
         confidence: evidence.tier,
         distinctAuthors: evidence.distinctAuthors,
@@ -140,8 +142,8 @@ export async function synthesizeOpportunities(
     system: SYSTEM,
     user: [
       "### TASK: opportunities",
-      "A partir des critiques recurrentes, propose 1 a 3 opportunites d'amelioration actionnables.",
-      "Ce sont des inferences (a creuser), pas des faits.",
+      "From the recurring critiques, propose 1 to 3 actionable improvement opportunities.",
+      "These are inferences (to investigate), not facts. Write in English.",
       'Format: {"opportunities":[{"statement":"..."}]}',
       "### INPUT_JSON",
       JSON.stringify({ brand, critiques: critiqueThemes }),
@@ -175,7 +177,7 @@ export async function synthesizeOpportunities(
           confidence: "intuition", // infere -> jamais au-dessus
           distinctAuthors: 0,
           distinctSources: 0,
-          rationale: "Inferee a partir des critiques ; a creuser.",
+          rationale: "Inferred from the critiques; to investigate.",
         },
         critiqueObsIds,
       ),

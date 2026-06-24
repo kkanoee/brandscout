@@ -92,13 +92,6 @@ interface OverviewInput {
 }
 interface OppInput { brand: string; critiques: Array<{ theme: string; claim: string }>; }
 
-const SENT_FR: Record<Sentiment, string> = {
-  positive: "positive",
-  negative: "negative",
-  neutral: "neutre",
-  mixed: "partagee",
-};
-
 export class MockMechanicalProvider implements LlmProvider {
   readonly stage = "mechanical" as const;
   readonly model: string;
@@ -141,9 +134,9 @@ export class MockJudgmentProvider implements LlmProvider {
       const n = c.observations.length;
       const label = c.theme.replace(/_/g, " ");
       const statement =
-        `Sur le theme « ${label} », la perception dominante est ${SENT_FR[c.dominantSentiment]} ` +
+        `On the topic of "${label}", the dominant perception is ${c.dominantSentiment} ` +
         `(${n} observation${n > 1 ? "s" : ""}).`;
-      const rationale = `Synthese deterministe du cluster « ${label} » : ${n} observation(s), tonalite ${SENT_FR[c.dominantSentiment]}.`;
+      const rationale = `Deterministic synthesis of the "${label}" cluster: ${n} observation(s), ${c.dominantSentiment} tone.`;
       return JSON.stringify({ statement, rationale });
     }
 
@@ -152,9 +145,9 @@ export class MockJudgmentProvider implements LlmProvider {
       const facts = o.findings.filter((f) => f.confidence === "fait_verifie").length;
       const signals = o.findings.filter((f) => f.confidence === "signal_probable").length;
       const overview =
-        `Perception de ${o.brand} : ${o.findings.length} conclusion(s) degagee(s), ` +
-        `dont ${facts} fait(s) verifie(s) et ${signals} signal(aux) probable(s). ` +
-        `Les conclusions ci-dessous sont tracables jusqu'aux Posts d'origine.`;
+        `Perception of ${o.brand}: ${o.findings.length} finding(s), ` +
+        `including ${facts} verified fact(s) and ${signals} probable signal(s). ` +
+        `Every finding below is traceable down to its source Posts.`;
       return JSON.stringify({ overview });
     }
 
@@ -166,7 +159,7 @@ export class MockJudgmentProvider implements LlmProvider {
         .sort((a, b) => b[1] - a[1])
         .slice(0, 3)
         .map(([theme]) => ({
-          statement: `Opportunite : adresser les critiques recurrentes sur « ${theme.replace(/_/g, " ")} » pour ${o.brand}.`,
+          statement: `Opportunity: address the recurring critiques about "${theme.replace(/_/g, " ")}" for ${o.brand}.`,
         }));
       return JSON.stringify({ opportunities: opps });
     }

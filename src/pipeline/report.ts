@@ -7,8 +7,9 @@ import { repo } from "../db/db.ts";
 import { getJudgment, parseJson } from "../llm/router.ts";
 
 const SYSTEM =
-  "Tu rediges la vue d'ensemble (perception) d'un rapport de marque, en 2-4 " +
-  "phrases sobres. Pas de superlatifs, pas de niveau de confiance invente. JSON.";
+  "You write the overview (perception) of a brand report, in 2-4 sober sentences. " +
+  "No superlatives, no invented confidence level. ALWAYS write in English, no " +
+  "matter what language the input is in. Respond in JSON.";
 
 export async function generateReport(
   runId: number,
@@ -20,7 +21,7 @@ export async function generateReport(
     system: SYSTEM,
     user: [
       "### TASK: overview",
-      "Redige la perception generale a partir des Findings (sans en inventer).",
+      "Write the overall perception from the Findings (do not invent any). Write in English.",
       'Format: {"overview":"..."}',
       "### INPUT_JSON",
       JSON.stringify({
@@ -39,7 +40,7 @@ export async function generateReport(
     overview = "";
   }
   if (!overview) {
-    overview = `Perception de ${brand} : ${findings.length} conclusion(s) tracable(s) jusqu'aux Posts.`;
+    overview = `Perception of ${brand}: ${findings.length} finding(s), each traceable down to the Posts.`;
   }
 
   return repo.saveReport(runId, overview);

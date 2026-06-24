@@ -23,7 +23,7 @@ export function listBrands() {
 }
 
 export function createBrand(name: string) {
-  if (!name || !name.trim()) throw new HttpError(400, "Nom de Brand requis.");
+  if (!name || !name.trim()) throw new HttpError(400, "Brand name required.");
   return repo.upsertBrand(name);
 }
 
@@ -34,10 +34,10 @@ export function addTarget(
   value: string,
   label: string | null,
 ) {
-  if (!repo.getBrand(brandId)) throw new HttpError(404, "Brand introuvable.");
-  if (!value || !value.trim()) throw new HttpError(400, "Valeur de cible requise.");
+  if (!repo.getBrand(brandId)) throw new HttpError(404, "Brand not found.");
+  if (!value || !value.trim()) throw new HttpError(400, "Target value required.");
   if (connector === "youtube" && mode === "keyword_query") {
-    throw new HttpError(400, "YouTube ne supporte que Seed Source en v1 (ADR-0001).");
+    throw new HttpError(400, "YouTube only supports Seed Source in v1 (ADR-0001).");
   }
   return repo.addTarget(brandId, mode, connector, value, label);
 }
@@ -49,9 +49,9 @@ export function deleteTarget(id: number) {
 
 export function startRun(brandId: number) {
   const brand = repo.getBrand(brandId);
-  if (!brand) throw new HttpError(404, "Brand introuvable.");
+  if (!brand) throw new HttpError(404, "Brand not found.");
   if (repo.listTargets(brandId).length === 0) {
-    throw new HttpError(400, "Ajoute au moins une Seed Source ou Keyword Query.");
+    throw new HttpError(400, "Add at least one Seed Source or Keyword Query.");
   }
   const run = repo.createRun(brandId, config.run.windowMonths, config.run.volumeCap);
   const logs: string[] = [];
@@ -74,7 +74,7 @@ export function listRuns(brandId?: number) {
 
 export function getRunDetail(runId: number) {
   const run = repo.getRun(runId);
-  if (!run) throw new HttpError(404, "Run introuvable.");
+  if (!run) throw new HttpError(404, "Run not found.");
   const brand = repo.getBrand(run.brandId);
   const report = repo.getReport(runId);
   const findings = repo.listFindings(runId);

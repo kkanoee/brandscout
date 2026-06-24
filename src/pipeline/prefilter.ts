@@ -37,12 +37,12 @@ export function prefilter(posts: Post[]): PrefilterResult {
     let reason: string | null = null;
 
     if (content.trim().length < minLen) {
-      reason = "trop court";
+      reason = "too short";
     } else if (isSpam(content)) {
       reason = "anti-spam";
     } else {
       const norm = normalize(content);
-      if (seen.has(norm)) reason = "doublon";
+      if (seen.has(norm)) reason = "duplicate";
       else seen.add(norm);
     }
 
