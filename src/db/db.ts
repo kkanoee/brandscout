@@ -32,7 +32,25 @@ export function getDb(): Database.Database {
   db.pragma("foreign_keys = ON");
   const schema = readFileSync(resolve(here, "schema.sql"), "utf8");
   db.exec(schema);
+  migrate(db);
   return db;
+}
+
+// Migrations idempotentes pour les bases creees avant un ajout de colonne.
+function migrate(d: Database.Database): void {
+  ensureColumn(d, "post", "context_title", "TEXT");
+  ensureColumn(d, "post", "context_url", "TEXT");
+}
+function ensureColumn(
+  d: Database.Database,
+  table: string,
+  column: string,
+  decl: string,
+): void {
+  const cols = d.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+  if (!cols.some((c) => c.name === column)) {
+    d.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`);
+  }
 }
 
 const now = (): string => new Date().toISOString();
@@ -78,6 +96,8 @@ function mapPost(r: any): Post {
     author: r.author,
     content: r.content,
     url: r.url,
+    contextTitle: r.context_title ?? null,
+    contextUrl: r.context_url ?? null,
     publishedAt: r.published_at ?? null,
     collectedAt: r.collected_at,
     kept: !!r.kept,
@@ -216,9 +236,9 @@ export const repo = {
     const d = getDb();
     const stmt = d.prepare(
       `INSERT INTO post (run_id, target_id, connector, source_key, external_id,
-         author, content, url, published_at, collected_at, kept, filtered_reason)
+         author, content, url, context_title, context_url, published_at, collected_at, kept, filtered_reason)
        VALUES (@run_id, @target_id, @connector, @source_key, @external_id,
-         @author, @content, @url, @published_at, @collected_at, 1, NULL)`,
+         @author, @content, @url, @context_title, @context_url, @published_at, @collected_at, 1, NULL)`,
     );
     const collectedAt = now();
     const ids: number[] = [];
@@ -233,6 +253,8 @@ export const repo = {
           author: p.author,
           content: p.content,
           url: p.url,
+          context_title: p.contextTitle ?? null,
+          context_url: p.contextUrl ?? null,
           published_at: p.publishedAt,
           collected_at: collectedAt,
         });

@@ -169,6 +169,7 @@ async function selectRun(runId) {
         <span>${s.observations ?? 0} observations · ${s.findings ?? 0} findings</span>
       </div>
     </div>`;
+  html += buildRecap(d.sections);
   if (d.overview) html += `<div class="overview">${escapeHtml(d.overview)}</div>`;
 
   for (const section of SECTION_ORDER) {
@@ -180,13 +181,67 @@ async function selectRun(runId) {
   v.innerHTML = html;
 }
 
+// Recap leger en haut du Report (compatible v1 : pas un dashboard interactif).
+// Repartition par tier de Confidence + themes principaux. Calcule cote front.
+const RECAP_TIERS = [
+  { key: "fait_verifie", label: "Verified fact" },
+  { key: "signal_probable", label: "Probable signal" },
+  { key: "intuition", label: "Hunch" },
+];
+function buildRecap(sections) {
+  const all = Object.values(sections).flat();
+  if (!all.length) return "";
+
+  const counts = {};
+  for (const t of RECAP_TIERS) counts[t.key] = all.filter((f) => f.confidence === t.key).length;
+
+  const segs = RECAP_TIERS
+    .filter((t) => counts[t.key] > 0)
+    .map((t) => `<div class="recap-seg ${t.key}" style="flex:${counts[t.key]}" title="${t.label}: ${counts[t.key]}"></div>`)
+    .join("");
+  const legend = RECAP_TIERS
+    .map((t) => `<span class="recap-leg"><i class="dot ${t.key}"></i>${t.label} <b>${counts[t.key]}</b></span>`)
+    .join("");
+
+  // Themes principaux : par nombre d'observations, hors opportunites (theme nul).
+  const themeMap = new Map();
+  for (const [section, items] of Object.entries(sections)) {
+    if (section === "opportunities") continue;
+    for (const f of items) {
+      if (!f.theme) continue;
+      const cur = themeMap.get(f.theme) || { obs: 0, section };
+      cur.obs += f.observations.length;
+      themeMap.set(f.theme, cur);
+    }
+  }
+  const chips = [...themeMap.entries()]
+    .sort((a, b) => b[1].obs - a[1].obs)
+    .slice(0, 6)
+    .map(([theme, info]) => `<span class="theme-chip ${info.section}">${escapeHtml(theme.replace(/_/g, " "))} · ${info.obs}</span>`)
+    .join("");
+
+  return `<div class="recap">
+      <div class="recap-bar">${segs}</div>
+      <div class="recap-legend">${legend}</div>
+      ${chips ? `<div class="recap-themes"><span class="recap-themes-label">Top themes</span>${chips}</div>` : ""}
+    </div>`;
+}
+
 function renderFinding(f) {
   const obs = f.observations.map((o) => {
     const p = o.post;
     const link = p ? `<a href="${escapeAttr(p.url)}" target="_blank" rel="noopener">${escapeHtml(p.sourceKey)} · ${escapeHtml(p.author)}</a>` : "unknown source";
     const date = p && p.publishedAt ? new Date(p.publishedAt).toLocaleDateString() : "";
+    // Contexte : de quelle video / quel thread provient le commentaire.
+    let ctx = "";
+    if (p && p.contextTitle) {
+      const icon = p.connector === "youtube" ? "▶" : "#";
+      const href = escapeAttr(p.contextUrl || p.url);
+      ctx = `<div class="ctx"><span class="ctx-ico">${icon}</span> <a href="${href}" target="_blank" rel="noopener">${escapeHtml(p.contextTitle)}</a></div>`;
+    }
     return `<div class="obs">
         <div class="claim">${escapeHtml(o.claim)}<span class="sent ${o.sentiment}">${o.sentiment}</span></div>
+        ${ctx}
         <div class="src">${link} ${date ? "· " + date : ""}</div>
         ${p ? `<div class="post-quote">${escapeHtml(p.content)}</div>` : ""}
       </div>`;

@@ -78,6 +78,10 @@ export interface Post {
   author: string;
   content: string;
   url: string;
+  // Le "contenant" d'ou vient le Post : titre + lien de la video YouTube, du
+  // thread Reddit... Permet de savoir de quelle video parle une Observation.
+  contextTitle: string | null;
+  contextUrl: string | null;
   publishedAt: string | null;
   collectedAt: string;
   kept: boolean;
@@ -125,5 +129,7 @@ export interface RawPost {
   author: string;
   content: string;
   url: string;
+  contextTitle?: string | null;
+  contextUrl?: string | null;
   publishedAt: string | null;
 }

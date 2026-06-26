@@ -101,6 +101,8 @@ export function getRunDetail(runId: number) {
               sourceKey: post.sourceKey,
               connector: post.connector,
               url: post.url,
+              contextTitle: post.contextTitle,
+              contextUrl: post.contextUrl,
               content: post.content,
               publishedAt: post.publishedAt,
             }

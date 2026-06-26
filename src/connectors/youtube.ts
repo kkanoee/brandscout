@@ -30,18 +30,24 @@ export class YouTubeConnector implements Connector {
 
     const channelId = await this.resolveChannelId(target.value, key);
     const uploads = await this.uploadsPlaylist(channelId, key);
-    const videoIds = await this.recentVideoIds(uploads, key, start, opts.volumeCap);
+    const videos = await this.recentVideos(uploads, key, start, opts.volumeCap);
 
     const channelTitle = target.label || target.value;
     const sourceKey = `yt/${channelTitle}`;
     const out: RawPost[] = [];
 
-    for (const videoId of videoIds) {
+    for (const video of videos) {
       if (out.length >= opts.volumeCap) break;
-      const comments = await this.videoComments(videoId, key, opts.volumeCap - out.length);
+      const comments = await this.videoComments(video.id, key, opts.volumeCap - out.length);
       for (const c of comments) {
         if (!withinWindow(c.publishedAt, start)) continue;
-        out.push({ ...c, sourceKey });
+        // On rattache chaque commentaire a SA video (titre + lien) pour la tracabilite.
+        out.push({
+          ...c,
+          sourceKey,
+          contextTitle: video.title,
+          contextUrl: `https://www.youtube.com/watch?v=${video.id}`,
+        });
         if (out.length >= opts.volumeCap) break;
       }
     }
@@ -65,32 +71,33 @@ export class YouTubeConnector implements Connector {
     return pl;
   }
 
-  private async recentVideoIds(
+  private async recentVideos(
     playlistId: string,
     key: string,
     start: Date,
     cap: number,
-  ): Promise<string[]> {
-    const ids: string[] = [];
+  ): Promise<Array<{ id: string; title: string }>> {
+    const videos: Array<{ id: string; title: string }> = [];
     let pageToken = "";
     // On limite le nombre de videos parcourues pour borner le quota.
     const maxVideos = Math.max(5, Math.ceil(cap / 20));
-    while (ids.length < maxVideos) {
+    while (videos.length < maxVideos) {
+      // part=snippet pour recuperer le TITRE de la video.
       const url =
-        `${API}/playlistItems?part=contentDetails&maxResults=50&playlistId=${playlistId}&key=${key}` +
+        `${API}/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${playlistId}&key=${key}` +
         (pageToken ? `&pageToken=${pageToken}` : "");
       const data = await fetchJson(url);
       for (const it of data?.items ?? []) {
         const pubAt = it?.contentDetails?.videoPublishedAt ?? null;
         if (pubAt && Date.parse(pubAt) < start.getTime()) continue;
         const vid = it?.contentDetails?.videoId;
-        if (vid) ids.push(vid);
-        if (ids.length >= maxVideos) break;
+        if (vid) videos.push({ id: vid, title: it?.snippet?.title ?? "(untitled video)" });
+        if (videos.length >= maxVideos) break;
       }
       pageToken = data?.nextPageToken ?? "";
       if (!pageToken) break;
     }
-    return ids;
+    return videos;
   }
 
   private async videoComments(

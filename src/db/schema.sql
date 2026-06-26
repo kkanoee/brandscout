@@ -45,6 +45,8 @@ CREATE TABLE IF NOT EXISTS post (
   author          TEXT NOT NULL,
   content         TEXT NOT NULL,
   url             TEXT NOT NULL,
+  context_title   TEXT,
+  context_url     TEXT,
   published_at    TEXT,
   collected_at    TEXT NOT NULL,
   kept            INTEGER NOT NULL DEFAULT 1,

@@ -100,13 +100,17 @@ export class RedditConnector implements Connector {
           ? new Date(d.created_utc * 1000).toISOString()
           : null;
         if (!withinWindow(publishedAt, start)) continue;
+        const permalink = `https://www.reddit.com${d.permalink}`;
         out.push({
           connector: "reddit",
           sourceKey: `r/${d.subreddit}`,
           externalId: d.id,
           author: d.author ?? "unknown",
           content: [d.title, d.selftext].filter(Boolean).join("\n\n"),
-          url: `https://www.reddit.com${d.permalink}`,
+          url: permalink,
+          // Contexte = le thread (titre + lien).
+          contextTitle: d.title ?? null,
+          contextUrl: permalink,
           publishedAt,
         });
         if (out.length >= cap) break;

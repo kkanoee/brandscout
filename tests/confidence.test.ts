@@ -8,6 +8,7 @@ function post(id: number, author: string, sourceKey: string): Post {
   return {
     id, runId: 1, targetId: null, connector: "reddit", sourceKey,
     externalId: `e${id}`, author, content: "x", url: "u",
+    contextTitle: null, contextUrl: null,
     publishedAt: null, collectedAt: "", kept: true, filteredReason: null,
   };
 }

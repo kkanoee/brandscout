@@ -26,6 +26,11 @@ export function loadFixturePosts(
 // Generation deterministe de secours (pas de fichier dedie).
 function synthesize(connector: ConnectorName, target: CollectionTarget): RawPost[] {
   const base = connector === "reddit" ? `r/${target.value}` : `yt/${target.value}`;
+  // URL de secours pointant vers une page REELLE (le lien de demo ne doit pas tomber en 404).
+  const fallbackUrl =
+    connector === "reddit"
+      ? `https://www.reddit.com/r/${encodeURIComponent(target.value)}/`
+      : `https://www.youtube.com/results?search_query=${encodeURIComponent(target.value)}`;
   const samples = [
     "Great content, the lessons are really clear and helpful for beginners.",
     "Honestly a bit overpriced for what you get, the course felt thin.",
@@ -40,7 +45,7 @@ function synthesize(connector: ConnectorName, target: CollectionTarget): RawPost
     externalId: `${slug(target.value)}-syn-${i}`,
     author: `user_${(i % 4) + 1}`,
     content,
-    url: `https://example.test/${slug(target.value)}/${i}`,
+    url: fallbackUrl,
     publishedAt: new Date(Date.now() - i * 86400000).toISOString(),
   }));
 }

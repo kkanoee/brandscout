@@ -101,6 +101,27 @@ button.ghost { background: transparent; color: var(--muted); }
 .overview { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent);
   padding: 12px 14px; border-radius: 6px; margin: 14px 0; }
 
+/* Recap leger (compatible v1, pas un dashboard interactif) */
+.recap { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin: 14px 0; }
+.recap-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--panel-2); }
+.recap-seg { min-width: 4px; }
+.recap-seg.fait_verifie { background: var(--fact); }
+.recap-seg.signal_probable { background: var(--signal); }
+.recap-seg.intuition { background: var(--intuition); }
+.recap-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 12px; color: var(--muted); }
+.recap-leg { display: inline-flex; align-items: center; gap: 6px; }
+.recap-leg b { color: var(--text); }
+.recap-leg .dot, .recap-themes .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot.fait_verifie { background: var(--fact); }
+.dot.signal_probable { background: var(--signal); }
+.dot.intuition { background: var(--intuition); }
+.recap-themes { margin-top: 12px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.recap-themes-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-right: 4px; }
+.theme-chip { font-size: 11px; padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel-2); }
+.theme-chip.strengths { border-color: var(--fact); color: var(--pos); }
+.theme-chip.critiques { border-color: var(--neg); color: var(--neg); }
+.theme-chip.themes { border-color: var(--border); color: var(--muted); }
+
 .section-title { font-size: 15px; margin: 22px 0 10px; display: flex; align-items: center; gap: 8px; }
 .section-title .count { font-size: 11px; color: var(--muted); }
 
@@ -119,6 +140,10 @@ button.ghost { background: transparent; color: var(--muted); }
 .rationale { font-size: 12px; color: var(--muted); font-style: italic; margin: 8px 0; }
 .obs { border-left: 2px solid var(--border); padding: 6px 0 6px 12px; margin: 8px 0; }
 .obs .claim { font-size: 13px; }
+.obs .ctx { font-size: 11px; margin-top: 3px; color: var(--muted); }
+.obs .ctx .ctx-ico { color: var(--accent); }
+.obs .ctx a { color: #aeb6c4; text-decoration: none; }
+.obs .ctx a:hover { color: var(--accent); text-decoration: underline; }
 .obs .src { font-size: 11px; color: var(--muted); margin-top: 3px; }
 .obs .src a { color: var(--accent); text-decoration: none; }
 .obs .src a:hover { text-decoration: underline; }
