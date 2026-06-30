@@ -357,6 +357,20 @@ export const repo = {
       .map(mapObservation);
   },
 
+  // GEO snapshot (source IA, ADR-0007) — stocke a part, en JSON.
+  saveGeo(runId: number, snapshot: unknown): void {
+    getDb()
+      .prepare(
+        `INSERT INTO geo (run_id, snapshot_json, generated_at) VALUES (?, ?, ?)
+         ON CONFLICT(run_id) DO UPDATE SET snapshot_json = excluded.snapshot_json, generated_at = excluded.generated_at`,
+      )
+      .run(runId, JSON.stringify(snapshot), now());
+  },
+  getGeo(runId: number): unknown | null {
+    const r = getDb().prepare("SELECT snapshot_json FROM geo WHERE run_id = ?").get(runId);
+    return r ? JSON.parse((r as any).snapshot_json) : null;
+  },
+
   // Report
   saveReport(runId: number, overview: string): Report {
     const d = getDb();

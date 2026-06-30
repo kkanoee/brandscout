@@ -61,4 +61,10 @@ test("Run complet sur Chart Fanatics -> Report tracable", async () => {
 
   // Report present
   assert.ok(repo.getReport(run.id)?.overview);
+
+  // G4 : un snapshot GEO (source IA) est persiste avec le Run, distinct des Findings.
+  const geo = repo.getGeo(run.id) as { models?: unknown[]; overall?: { aiReputation?: number } } | null;
+  assert.ok(geo, "snapshot GEO attendu");
+  assert.ok(Array.isArray(geo!.models) && geo!.models.length > 0);
+  assert.equal(typeof geo!.overall?.aiReputation, "number");
 });

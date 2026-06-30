@@ -71,6 +71,9 @@ export const config = {
   // A adapter selon les modeles que tu veux mesurer.
   geo: {
     models: str("GEO_MODELS", "openai/gpt-4o-mini,google/gemini-flash-1.5,x-ai/grok-2-1212"),
+    // Sonder les modeles en LIVE pendant un Run ? Defaut non (evite un coût
+    // surprise) : le Run inclut un snapshot GEO en fixtures sauf opt-in.
+    liveInRun: str("GEO_LIVE_IN_RUN", "") === "1",
   },
 } as const;
 

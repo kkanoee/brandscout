@@ -33,6 +33,15 @@ function printMatrix(snap: GeoSnapshot): void {
     );
   }
 
+  // Accord inter-modeles : themes a risque vus par plusieurs IA (corrobores).
+  if (snap.riskThemes.length) {
+    console.log("\nCross-model risk themes");
+    for (const rt of snap.riskThemes) {
+      const tag = rt.corroborated ? "CORROBORATED" : "single-model";
+      console.log(`  ${pad(rt.theme, 18)} ${pad(tag, 14)} ${rt.models.join(", ")}`);
+    }
+  }
+
   // Risk topics tracables jusqu'a la reponse exacte du modele (provenance).
   const risky = snap.classified.filter((c) => c.riskTopics.length > 0);
   if (risky.length) {

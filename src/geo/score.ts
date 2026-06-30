@@ -1,10 +1,44 @@
 // Scoring GEO : agrege les reponses classees en une matrice par modele + un
 // snapshot global. NB : c'est un scoring PROPRE au GEO, distinct du barème de
 // Confidence humain (ADR-0007).
-import type { AnswerClass, ModelScore, GeoSnapshot } from "./types.ts";
+import type { AnswerClass, ModelScore, GeoSnapshot, RiskTheme } from "./types.ts";
 
 function pct(n: number, d: number): number {
   return d === 0 ? 0 : Math.round((n / d) * 1000) / 10;
+}
+
+// Theme canonique d'un risk topic (pour l'accord inter-modeles).
+const RISK_THEME_MAP: Array<[RegExp, string]> = [
+  [/\b(price|pricing|cost|expensive|overpriced|refund|steep|not worth)/i, "pricing"],
+  [/\b(support|response|reply|ignored|slow|service|complaint)/i, "support"],
+  [/\b(scam|misleading|fake|fraud|untrustworthy|legit|negative report)/i, "trust"],
+  [/\b(content|lesson|course|material|quality)/i, "content_quality"],
+];
+function riskTheme(text: string): string {
+  for (const [re, label] of RISK_THEME_MAP) if (re.test(text)) return label;
+  return "general";
+}
+
+// Themes a risque vus par >= 2 modeles distincts = corrobores entre IA.
+function crossModelRiskThemes(classified: AnswerClass[]): RiskTheme[] {
+  const byTheme = new Map<string, { models: Set<string>; mentions: number }>();
+  for (const c of classified) {
+    for (const t of c.riskTopics) {
+      const theme = riskTheme(t);
+      const cur = byTheme.get(theme) ?? { models: new Set<string>(), mentions: 0 };
+      cur.models.add(c.model);
+      cur.mentions++;
+      byTheme.set(theme, cur);
+    }
+  }
+  return [...byTheme.entries()]
+    .map(([theme, v]) => ({
+      theme,
+      models: [...v.models],
+      mentions: v.mentions,
+      corroborated: v.models.size >= 2,
+    }))
+    .sort((a, b) => b.models.length - a.models.length || b.mentions - a.mentions);
 }
 
 function scoreModel(model: string, rows: AnswerClass[]): ModelScore {
@@ -51,6 +85,7 @@ export function score(brand: string, live: boolean, classified: AnswerClass[]): 
     generatedAt: new Date().toISOString(),
     live,
     models: models.sort((a, b) => b.net - a.net),
+    riskThemes: crossModelRiskThemes(classified),
     overall: { runs, mentions, presencePct: presScore, positive, neutral, risk, net, aiReputation },
     classified,
   };

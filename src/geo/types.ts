@@ -33,11 +33,21 @@ export interface ModelScore {
   net: number; // positive - risk
 }
 
+// Accord inter-modeles : un theme a risque releve par plusieurs modeles est plus
+// solide (l'analogue, entre IA, de la corroboration humaine — ADR-0007).
+export interface RiskTheme {
+  theme: string;
+  models: string[]; // modeles distincts qui l'ont releve
+  mentions: number;
+  corroborated: boolean; // >= 2 modeles distincts
+}
+
 export interface GeoSnapshot {
   brand: string;
   generatedAt: string;
   live: boolean;
   models: ModelScore[];
+  riskThemes: RiskTheme[];
   overall: {
     runs: number;
     mentions: number;

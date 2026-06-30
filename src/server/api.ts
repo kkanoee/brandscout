@@ -124,6 +124,7 @@ export function getRunDetail(runId: number) {
     run: { ...run, brandName: brand?.name ?? "?" },
     overview: report?.overview ?? null,
     sections,
+    geo: repo.getGeo(runId),
     logs: runLogs.get(runId) ?? [],
   };
 }

@@ -93,3 +93,11 @@ CREATE TABLE IF NOT EXISTS report (
   overview     TEXT NOT NULL,
   generated_at TEXT NOT NULL
 );
+
+-- Snapshot GEO (source IA, ADR-0007) : stocke a part, en JSON. Scoring distinct
+-- du barème de Confidence humain (ce n'est PAS un Finding).
+CREATE TABLE IF NOT EXISTS geo (
+  run_id        INTEGER PRIMARY KEY REFERENCES run(id) ON DELETE CASCADE,
+  snapshot_json TEXT NOT NULL,
+  generated_at  TEXT NOT NULL
+);

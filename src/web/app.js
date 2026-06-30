@@ -178,7 +178,51 @@ async function selectRun(runId) {
     html += `<div class="section-title">${SECTION_LABELS[section]} <span class="count">${items.length}</span></div>`;
     for (const f of items) html += renderFinding(f);
   }
+  if (d.geo) html += buildGeo(d.geo);
   v.innerHTML = html;
+}
+
+// Section "AI Reputation" (GEO / source IA, ADR-0007). Distincte du listening
+// humain : matrice par modele + accord inter-modeles + reponses brutes en preuve.
+function buildGeo(geo) {
+  if (!geo || !Array.isArray(geo.models) || !geo.models.length) return "";
+  const o = geo.overall;
+  const rows = geo.models.map((m) => `
+    <tr>
+      <td class="gm-model">${escapeHtml(m.model)}</td>
+      <td class="gm-risk">${m.risk}</td>
+      <td>${m.neutral}</td>
+      <td class="gm-pos">${m.positive}</td>
+      <td class="gm-net">${m.net >= 0 ? "+" : ""}${m.net}</td>
+      <td>${m.runs}</td>
+      <td>${m.presencePct}%</td>
+    </tr>`).join("");
+  const themes = (geo.riskThemes || []).map((rt) =>
+    `<span class="theme-chip ${rt.corroborated ? "critiques" : "themes"}" title="${escapeAttr(rt.models.join(", "))}">${escapeHtml(rt.theme.replace(/_/g, " "))}${rt.corroborated ? " · ✓ " + rt.models.length + " models" : ""}</span>`).join("");
+  const risky = (geo.classified || []).filter((c) => c.riskTopics && c.riskTopics.length);
+  const riskList = risky.map((c) => `
+    <details class="finding">
+      <summary>
+        <span class="badge intuition">${escapeHtml(c.model)}</span>
+        <span class="stmt">${escapeHtml(c.riskTopics.join(" · "))}</span>
+      </summary>
+      <div class="obs-list"><div class="post-quote">${escapeHtml(c.answer)}</div></div>
+    </details>`).join("");
+  return `
+    <div class="section-title">AI Reputation <span class="count">${geo.live ? "live" : "snapshot"}</span></div>
+    <div class="geo-head">
+      <div class="geo-score">${o.aiReputation}<span>/100</span></div>
+      <div class="geo-meta">
+        <div>Presence <b>${o.presencePct}%</b> · ${o.mentions}/${o.runs} answers mention the brand</div>
+        <div>Sentiment <b class="pos">+${o.positive}</b> / ${o.neutral} / <b class="neg">-${o.risk}</b> · net ${o.net >= 0 ? "+" : ""}${o.net}</div>
+      </div>
+    </div>
+    <table class="geo-matrix">
+      <thead><tr><th>Model</th><th>Risk</th><th>Neutral</th><th>Positive</th><th>Net</th><th>Runs</th><th>Presence</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${themes ? `<div class="recap-themes"><span class="recap-themes-label">Risk themes</span>${themes}</div>` : ""}
+    ${riskList ? `<div class="geo-risks">${riskList}</div>` : ""}`;
 }
 
 // Recap leger en haut du Report (compatible v1 : pas un dashboard interactif).

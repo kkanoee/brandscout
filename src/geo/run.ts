@@ -3,7 +3,7 @@
 // modele on-demand de v1 (ADR-0007). Le suivi continu = v2.
 import { config } from "../config.ts";
 import { probe, liveModels } from "./probe.ts";
-import { classify } from "./analyze.ts";
+import { classifyAnswers } from "./analyze.ts";
 import { score } from "./score.ts";
 import type { GeoSnapshot } from "./types.ts";
 
@@ -31,6 +31,6 @@ export async function geoSnapshot(brand: string, opts: GeoRunOptions = {}): Prom
   const models = opts.models ?? (live ? liveModels() : ["OpenAI", "Perplexity", "Grok"]);
 
   const answers = await probe(brand, prompts, models, { live });
-  const classified = answers.map((a) => classify(brand, a));
+  const classified = await classifyAnswers(brand, answers, { live });
   return score(brand, live, classified);
 }

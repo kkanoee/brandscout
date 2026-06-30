@@ -3,6 +3,8 @@
 // (ADR-0005). On-demand : un Run = une analyse d'UNE Brand a l'instant T.
 import type { Post, RunStats } from "../domain/types.ts";
 import { repo } from "../db/db.ts";
+import { config } from "../config.ts";
+import { geoSnapshot } from "../geo/run.ts";
 import { getConnector } from "../connectors/connector.ts";
 import { prefilter } from "./prefilter.ts";
 import { extract } from "./extract.ts";
@@ -73,6 +75,17 @@ export async function executeRun(runId: number, hooks: RunHooks = {}): Promise<v
     // --- Report --------------------------------------------------------------
     repo.setRunStatus(runId, "reporting");
     await generateReport(runId, brand.name, allFindings);
+
+    // --- GEO / source IA (ADR-0007) : snapshot parallele, persiste a part -----
+    // Hors chemin critique : un echec GEO ne fait pas echouer le Run.
+    try {
+      const geoLive = config.geo.liveInRun && config.mode !== "fixtures";
+      const geo = await geoSnapshot(brand.name, { live: geoLive });
+      repo.saveGeo(runId, geo);
+      log(`GEO : AI reputation ${geo.overall.aiReputation}/100 (${geo.live ? "live" : "fixtures"}), ${geo.models.length} modeles.`);
+    } catch (e) {
+      log(`GEO ignore : ${e instanceof Error ? e.message : String(e)}`);
+    }
 
     const stats: RunStats = {
       collected,

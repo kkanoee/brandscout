@@ -31,6 +31,12 @@ test("snapshot GEO sur fixtures : matrice par modele + score global", async () =
   const risky = snap.classified.filter((c) => c.riskTopics.length > 0);
   assert.ok(risky.length >= 3);
   assert.ok(risky.every((c) => c.answer.length > 0));
+
+  // G3 : accord inter-modeles — le theme "pricing" est corrobore par >= 2 modeles.
+  const pricing = snap.riskThemes.find((t) => t.theme === "pricing");
+  assert.ok(pricing, "theme pricing attendu");
+  assert.ok(pricing!.corroborated);
+  assert.ok(pricing!.models.length >= 2);
 });
 
 test("la presence est une metrique GEO, pas un tier de Confidence", async () => {

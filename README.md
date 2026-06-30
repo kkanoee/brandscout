@@ -51,12 +51,14 @@ De plus en plus de gens se renseignent en **demandant à une IA** (ChatGPT, Perp
 
 **Périmètre.** Un **snapshot GEO** (un Run, multi-modèles, à l'instant T) colle au modèle on-demand et peut arriver tôt. Le **suivi continu + alerting** relève du monitoring v2 ([ADR-0006](./docs/adr/0006-v1-thin-mono-user-web-app.md)). Limite assumée : via API on a le **modèle de base**, pas les surfaces grand public (ChatGPT browsing, AI Overviews) — bon proxy, pas identique.
 
-### Étapes de build GEO (à venir)
-- [ ] **G0 — Cadrage.** ADR-0007 + glossaire (CONTEXT.md). ✅
-- [ ] **G1 — Connecteur LLM (*Prompt Probe*).** Sonder N modèles via OpenRouter sur une liste de prompts, persister les réponses comme Posts (`ai/<modèle>`).
-- [ ] **G2 — Extraction GEO.** Réponse → Observations : marque mentionnée ? sentiment ? claim ? risque/hallucination ?
-- [ ] **G3 — Scoring GEO.** Module distinct de `confidence.ts` : Presence, Sentiment, Net, accord inter-modèles, risk topics.
-- [ ] **G4 — Report GEO.** Section AI Reputation + matrice par modèle, chaque risk topic tracé jusqu'à la réponse brute.
+### Étapes de build GEO — **G0→G4 faites**
+- [x] **G0 — Cadrage.** ADR-0007 + glossaire (CONTEXT.md).
+- [x] **G1 — Connecteur LLM (*Prompt Probe*).** Sonde N modèles via OpenRouter (live) ou fixtures (offline). [src/geo/probe.ts](./src/geo/probe.ts) + CLI [src/geo.ts](./src/geo.ts) (`npm run geo`).
+- [x] **G2 — Classification GEO.** Réponse → présence / sentiment / risk topics ; par LLM (étage mécanique) en live, heuristique déterministe en fixtures. [src/geo/analyze.ts](./src/geo/analyze.ts)
+- [x] **G3 — Scoring GEO.** Module distinct de `confidence.ts` : Presence, Sentiment, Net, **accord inter-modèles** (risk theme corroboré par ≥ 2 modèles). [src/geo/score.ts](./src/geo/score.ts)
+- [x] **G4 — Report GEO.** Snapshot GEO persisté par Run (table `geo`, JSON), section **AI Reputation** dans le Report web (matrice par modèle + thèmes corroborés + chaque risk topic tracé jusqu'à la réponse brute).
+
+> Persistance : le snapshot GEO est stocké **à part** (table `geo`, JSON) — pas dans les tables `post/observation/finding` du listening humain. Les deux pistes restent cleanement séparées (ADR-0007). Live dans un Run : opt-in via `GEO_LIVE_IN_RUN=1` (sinon snapshot fixtures, pour éviter un coût surprise).
 
 ## Enveloppe d'un Run (défauts, configurables)
 - **Fenêtre temporelle** : 6 derniers mois.
