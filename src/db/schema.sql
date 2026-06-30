@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS collection_target (
   id         INTEGER PRIMARY KEY,
   brand_id   INTEGER NOT NULL REFERENCES brand(id) ON DELETE CASCADE,
   mode       TEXT NOT NULL CHECK (mode IN ('seed_source','keyword_query')),
-  connector  TEXT NOT NULL CHECK (connector IN ('youtube','reddit')),
+  connector  TEXT NOT NULL, -- valide en code (getConnector) ; permet d'ajouter des connecteurs sans migration
   value      TEXT NOT NULL,
   label      TEXT,
   created_at TEXT NOT NULL

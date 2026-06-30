@@ -40,6 +40,37 @@ export function getDb(): Database.Database {
 function migrate(d: Database.Database): void {
   ensureColumn(d, "post", "context_title", "TEXT");
   ensureColumn(d, "post", "context_url", "TEXT");
+  relaxConnectorCheck(d);
+}
+
+// Anciennes bases : CHECK (connector IN ('youtube','reddit')) bloque 'x'.
+// Rebuild de la table sans ce CHECK (recette officielle SQLite, ids preserves).
+function relaxConnectorCheck(d: Database.Database): void {
+  const row = d
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='collection_target'")
+    .get() as { sql?: string } | undefined;
+  if (!row?.sql || !/connector IN \('youtube','reddit'\)/.test(row.sql)) return;
+
+  d.pragma("foreign_keys = OFF"); // hors transaction (sinon no-op)
+  const tx = d.transaction(() => {
+    d.exec(`CREATE TABLE collection_target_new (
+      id         INTEGER PRIMARY KEY,
+      brand_id   INTEGER NOT NULL REFERENCES brand(id) ON DELETE CASCADE,
+      mode       TEXT NOT NULL CHECK (mode IN ('seed_source','keyword_query')),
+      connector  TEXT NOT NULL,
+      value      TEXT NOT NULL,
+      label      TEXT,
+      created_at TEXT NOT NULL
+    );`);
+    d.exec(
+      "INSERT INTO collection_target_new SELECT id, brand_id, mode, connector, value, label, created_at FROM collection_target;",
+    );
+    d.exec("DROP TABLE collection_target;");
+    d.exec("ALTER TABLE collection_target_new RENAME TO collection_target;");
+    d.exec("CREATE INDEX IF NOT EXISTS idx_target_brand ON collection_target(brand_id);");
+  });
+  tx();
+  d.pragma("foreign_keys = ON");
 }
 function ensureColumn(
   d: Database.Database,

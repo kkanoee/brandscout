@@ -47,6 +47,12 @@ export const config = {
     redditClientId: str("REDDIT_CLIENT_ID"),
     redditClientSecret: str("REDDIT_CLIENT_SECRET"),
     redditUserAgent: str("REDDIT_USER_AGENT", "brandscout/1.0"),
+    // Backend Reddit : "official" (OAuth Data API) ou "cli" (rdt-cli, non-officiel).
+    redditBackend: str("REDDIT_BACKEND", "official"),
+    // Binaires CLI-backend (ADR-0008) : X via twitter-cli, Reddit via rdt-cli.
+    // A installer + session connectee. Le query est passe en argument (pas de shell).
+    xCliBin: str("X_CLI_BIN", "twitter"),
+    redditCliBin: str("REDDIT_CLI_BIN", "rdt"),
   },
 
   run: {

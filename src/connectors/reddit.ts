@@ -6,6 +6,7 @@ import type { CollectionTarget, RawPost } from "../domain/types.ts";
 import type { Connector, CollectOptions } from "./connector.ts";
 import { withinWindow, windowStart } from "./connector.ts";
 import { loadFixturePosts } from "./fixtures.ts";
+import { cliSearch } from "./cliBackend.ts";
 import { config } from "../config.ts";
 
 const OAUTH = "https://oauth.reddit.com";
@@ -24,6 +25,12 @@ export class RedditConnector implements Connector {
   }
 
   async collect(target: CollectionTarget, opts: CollectOptions): Promise<RawPost[]> {
+    // Backend "cli" (rdt-cli, non-officiel, ADR-0008) : contourne l'API officielle.
+    if (config.connectors.redditBackend === "cli") {
+      if (config.mode !== "live") return loadFixturePosts("reddit", target);
+      return cliSearch("reddit", config.connectors.redditCliBin, target.value);
+    }
+    // Backend "official" (OAuth Data API).
     if (!this.live) return loadFixturePosts("reddit", target);
     return target.mode === "seed_source"
       ? this.collectSubreddit(target, opts)

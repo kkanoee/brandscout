@@ -3,7 +3,8 @@
 // agnostique du connecteur").
 
 export type CollectionMode = "seed_source" | "keyword_query";
-export type ConnectorName = "youtube" | "reddit";
+// "x" (Twitter) via CLI-backend non-officiel (twitter-cli) — piste v2 (ADR-0001/0008).
+export type ConnectorName = "youtube" | "reddit" | "x";
 
 export type RunStatus =
   | "pending"

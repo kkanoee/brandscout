@@ -31,6 +31,7 @@ export function withinWindow(publishedAt: string | null, start: Date): boolean {
 import { config, effectiveMode } from "../config.ts";
 import { YouTubeConnector } from "./youtube.ts";
 import { RedditConnector } from "./reddit.ts";
+import { XConnector } from "./x.ts";
 
 export function getConnector(name: ConnectorName): Connector {
   switch (name) {
@@ -44,6 +45,8 @@ export function getConnector(name: ConnectorName): Connector {
       const live = effectiveMode(hasKeys) === "live";
       return new RedditConnector(live);
     }
+    case "x":
+      return new XConnector();
     default:
       throw new Error(`Connecteur inconnu: ${name}`);
   }

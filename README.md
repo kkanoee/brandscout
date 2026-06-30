@@ -13,7 +13,7 @@ Un **Run** prend une **Brand** (+ ses sources fournies par l'utilisateur), colle
 - **Sources fournies par l'utilisateur**, deux modes :
   - *Seed Source* — un endroit connu (chaîne YouTube, subreddit) → on collecte tout.
   - *Keyword Query* — un terme dont on collecte les posts publics qui le mentionnent.
-- **Connecteurs : YouTube + Reddit.**
+- **Connecteurs : YouTube + Reddit** (API officielles). **X/Twitter + Reddit non-officiels** via CLI-backend (twitter-cli / rdt-cli), opt-in, risque ToS assumé. ([ADR-0008](./docs/adr/0008-x-and-reddit-via-cli-backend.md))
 - **Analyse** : Post → Observation → Finding, avec Confidence sur 3 tiers (**Fait vérifié / Signal probable / Intuition**). La preuve plafonne la confiance ; le LLM ne surclasse jamais. ([ADR-0003](./docs/adr/0003-evidence-caps-confidence.md), [ADR-0004](./docs/adr/0004-confidence-tier-thresholds.md))
 - **Routage LLM 2 étages** : owl-alpha (gratuit, OpenRouter) pour le mécanique, Claude Opus 4.8 pour le jugement, derrière une abstraction swappable. ([ADR-0002](./docs/adr/0002-two-tier-llm-routing.md))
 - **Persistance** : chaque Run stocké intégralement en **SQLite local-first**. ([ADR-0005](./docs/adr/0005-sqlite-local-first-persistence.md))
@@ -22,7 +22,7 @@ Un **Run** prend une **Brand** (+ ses sources fournies par l'utilisateur), colle
 
 ### Ce qui est explicitement REPOUSSÉ en v2+
 - Monitoring **continu** (diff entre Runs, alertes).
-- **X (Twitter)** via auto-hébergé (agent hermes + VPS + nitter). API officielle rejetée sur le coût. ([ADR-0001](./docs/adr/0001-x-access-deferred-to-v2-self-hosted.md))
+- **X (Twitter)** via auto-hébergé (agent hermes + VPS + nitter). API officielle rejetée sur le coût. ([ADR-0001](./docs/adr/0001-x-access-deferred-to-v2-self-hosted.md)) — *partiellement avancé en CLI-backend non-officiel, voir [ADR-0008](./docs/adr/0008-x-and-reddit-via-cli-backend.md).*
 - **Discord, Instagram, TikTok.**
 - **Découverte autonome** de marques/sources (l'outil propose lui-même quoi chercher).
 - **Dashboard interactif lourd** : filtres/recherche avancés, annotation, diff live, multi-utilisateurs.
