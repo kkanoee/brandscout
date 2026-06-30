@@ -1,0 +1,64 @@
+[
+  {
+    "model": "OpenAI",
+    "prompt": "What are the best chart pattern trading courses?",
+    "answer": "A few well-regarded options stand out. Chart Fanatics is often praised for clear, beginner-friendly chart pattern lessons and an active community."
+  },
+  {
+    "model": "OpenAI",
+    "prompt": "Is Chart Fanatics a legit trading education service?",
+    "answer": "Yes, Chart Fanatics is generally considered a legitimate education service, with helpful lessons and reliable content."
+  },
+  {
+    "model": "OpenAI",
+    "prompt": "What do people say about Chart Fanatics pricing?",
+    "answer": "Some users feel Chart Fanatics is expensive and a bit overpriced for beginners, though many find the content worth it."
+  },
+  {
+    "model": "OpenAI",
+    "prompt": "Should I trust Chart Fanatics to learn trading?",
+    "answer": "Chart Fanatics is widely seen as trustworthy and credible, but always do your own research before paying."
+  },
+
+  {
+    "model": "Perplexity",
+    "prompt": "What are the best chart pattern trading courses?",
+    "answer": "There are several providers in this space. Chart Fanatics is one option focused on technical analysis and chart patterns."
+  },
+  {
+    "model": "Perplexity",
+    "prompt": "Is Chart Fanatics a legit trading education service?",
+    "answer": "Chart Fanatics is generally considered legit, with positive feedback on its lessons and community."
+  },
+  {
+    "model": "Perplexity",
+    "prompt": "What do people say about Chart Fanatics pricing?",
+    "answer": "Several users describe Chart Fanatics as overpriced and have asked for a refund after subscribing."
+  },
+  {
+    "model": "Perplexity",
+    "prompt": "Should I trust Chart Fanatics to learn trading?",
+    "answer": "Chart Fanatics appears credible and reputable, with mostly positive reviews overall."
+  },
+
+  {
+    "model": "Grok",
+    "prompt": "What are the best chart pattern trading courses?",
+    "answer": "Honestly there are many decent ones out there; I would not single out a specific paid course here."
+  },
+  {
+    "model": "Grok",
+    "prompt": "Is Chart Fanatics a legit trading education service?",
+    "answer": "Chart Fanatics has been called a scam by some users, with misleading marketing promises."
+  },
+  {
+    "model": "Grok",
+    "prompt": "What do people say about Chart Fanatics pricing?",
+    "answer": "Chart Fanatics pricing is steep and many say it is not worth the cost for what you get."
+  },
+  {
+    "model": "Grok",
+    "prompt": "Should I trust Chart Fanatics to learn trading?",
+    "answer": "I'd be cautious with Chart Fanatics; there are negative reports and complaints worth checking first."
+  }
+]

@@ -27,6 +27,36 @@ Un **Run** prend une **Brand** (+ ses sources fournies par l'utilisateur), colle
 - **Découverte autonome** de marques/sources (l'outil propose lui-même quoi chercher).
 - **Dashboard interactif lourd** : filtres/recherche avancés, annotation, diff live, multi-utilisateurs.
 - **Scouting d'invités** (le dérivé de la note produit) + sa mémoire d'exclusion des anciens invités.
+- **GEO en continu** : suivi dans le temps de la réputation IA + alerting hebdo (le snapshot reste possible plus tôt, voir ci-dessous). ([ADR-0007](./docs/adr/0007-geo-ai-source-track.md))
+
+## Piste GEO / source IA (cadré — [ADR-0007](./docs/adr/0007-geo-ai-source-track.md))
+
+De plus en plus de gens se renseignent en **demandant à une IA** (ChatGPT, Perplexity, Grok, Gemini…). Comment ces modèles décrivent une marque devient un enjeu réputationnel (le **GEO**, Generative Engine Optimization). BrandScout l'ajoute comme une **piste d'analyse parallèle** au listening humain — pas comme un connecteur de plus branché sur le même scoring.
+
+- **Nouveau Collection Mode : *Prompt Probe*** — l'utilisateur fournit des prompts (ce qu'un humain demanderait à une IA sur la marque/catégorie), exécutés contre plusieurs modèles.
+- **Nouveau Connector : LLM** — réutilise l'intégration **OpenRouter** (une clé → plusieurs modèles cibles). Le modèle *sondé* (la donnée) est distinct du modèle *analyste* du routage 2 étages ([ADR-0002](./docs/adr/0002-two-tier-llm-routing.md)).
+- **Modèle de données réutilisé** : une réponse d'IA = un Post (`author` = modèle, `sourceKey` = `ai/<modèle>`), d'où on extrait des Observations. La **réponse brute est conservée comme preuve** (provenance).
+- **Le barème de Confidence humain NE s'applique PAS** (une IA n'est pas un auteur humain indépendant). Le GEO a ses **propres métriques** :
+
+| Métrique GEO | Sens |
+|---|---|
+| **Presence / Visibility** | % de prompts où la marque apparaît (par modèle + global) |
+| **Sentiment** | positif / neutre / négatif-risque |
+| **Net** | positif − risque |
+| **Accord inter-modèles** | corroboration entre **modèles** distincts (≥ 2 IA = plus solide) |
+| **Risk topics** | affirmations négatives ou **fausses** (hallucinations) sur la marque |
+| **Share of voice** | vs concurrents (prompts de catégorie) |
+
+**Report** : une section **AI Reputation** (score global + sous-scores) + une **matrice par modèle** (Risk / Neutral / Positive, Net, Runs, Presence).
+
+**Périmètre.** Un **snapshot GEO** (un Run, multi-modèles, à l'instant T) colle au modèle on-demand et peut arriver tôt. Le **suivi continu + alerting** relève du monitoring v2 ([ADR-0006](./docs/adr/0006-v1-thin-mono-user-web-app.md)). Limite assumée : via API on a le **modèle de base**, pas les surfaces grand public (ChatGPT browsing, AI Overviews) — bon proxy, pas identique.
+
+### Étapes de build GEO (à venir)
+- [ ] **G0 — Cadrage.** ADR-0007 + glossaire (CONTEXT.md). ✅
+- [ ] **G1 — Connecteur LLM (*Prompt Probe*).** Sonder N modèles via OpenRouter sur une liste de prompts, persister les réponses comme Posts (`ai/<modèle>`).
+- [ ] **G2 — Extraction GEO.** Réponse → Observations : marque mentionnée ? sentiment ? claim ? risque/hallucination ?
+- [ ] **G3 — Scoring GEO.** Module distinct de `confidence.ts` : Presence, Sentiment, Net, accord inter-modèles, risk topics.
+- [ ] **G4 — Report GEO.** Section AI Reputation + matrice par modèle, chaque risk topic tracé jusqu'à la réponse brute.
 
 ## Enveloppe d'un Run (défauts, configurables)
 - **Fenêtre temporelle** : 6 derniers mois.

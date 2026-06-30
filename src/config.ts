@@ -66,6 +66,12 @@ export const config = {
     port: int("PORT", 4317),
     dbPath: str("DB_PATH", "data/brandscout.sqlite"),
   },
+
+  // Piste GEO (ADR-0007) : modeles d'IA a sonder en live (ids OpenRouter).
+  // A adapter selon les modeles que tu veux mesurer.
+  geo: {
+    models: str("GEO_MODELS", "openai/gpt-4o-mini,google/gemini-flash-1.5,x-ai/grok-2-1212"),
+  },
 } as const;
 
 // Resout le mode effectif d'un sous-systeme selon la presence de ses cles.

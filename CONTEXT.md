@@ -53,3 +53,23 @@ _Avoid_: sources multiples (ambigu), corroboration (= le mécanisme, pas les sou
 **Report** (Rapport) :
 Le livrable d'un Run : document structuré et dense (perception, points forts, critiques, thèmes, opportunités) où chaque Finding se déplie jusqu'à ses Posts. Espace de travail orienté décision, pas vitrine.
 _Avoid_: dashboard (= la couche v2 interactive), résumé.
+
+## Source IA / GEO
+
+Piste d'analyse parallèle : comment les modèles d'IA décrivent la marque (le GEO). Distincte du listening humain ; le barème de Confidence ne s'y applique pas (voir [ADR-0007](./docs/adr/0007-geo-ai-source-track.md)).
+
+**Prompt Probe** (Sonde de prompt) :
+Collection Mode où l'utilisateur fournit des **prompts** exécutés contre plusieurs modèles d'IA, pour observer comment la marque apparaît dans leurs réponses.
+_Avoid_: question, requête (= le contenu), Keyword Query (= le mode pour les posts humains).
+
+**AI Answer** (Réponse IA) :
+La réponse d'un modèle à un Prompt Probe — un Post de la piste GEO, dont l'`author` est le modèle. Conservée brute comme preuve.
+_Avoid_: complétion, output, mention.
+
+**Presence** (Présence) :
+La fréquence à laquelle les réponses d'IA mentionnent la marque (par modèle et global). Métrique GEO de visibilité — **pas** un niveau de Confidence.
+_Avoid_: confidence (réservé au listening humain), visibilité (ok en anglais : *Visibility*).
+
+**Risk topic** (Sujet à risque) :
+Une affirmation **négative ou fausse** (hallucination) qu'un modèle énonce sur la marque. C'est ce qui peuple le suivi de risque réputationnel IA.
+_Avoid_: critique (= une Observation humaine), bug.
