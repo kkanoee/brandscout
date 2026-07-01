@@ -16,7 +16,13 @@ function runCli(bin: string, args: string[]): Promise<string> {
     let stderr = "";
     let child;
     try {
-      child = spawn(bin, args, { shell: false });
+      // Force UTF-8 cote enfant : sur Windows la console par defaut est cp1252,
+      // et ces CLIs Python plantent (UnicodeEncodeError) des qu'un post contient
+      // un emoji / caractere non-latin1. On garantit une sortie UTF-8 stable.
+      child = spawn(bin, args, {
+        shell: false,
+        env: { ...process.env, PYTHONUTF8: "1", PYTHONIOENCODING: "utf-8" },
+      });
     } catch (e) {
       reject(e);
       return;
@@ -40,7 +46,10 @@ function runCli(bin: string, args: string[]): Promise<string> {
   });
 }
 
-// Extrait le tableau d'items d'une sortie JSON (tolere les enveloppes courantes).
+// Deballe une sortie CLI heterogene vers une liste d'items "post-like".
+// Gere, en plus du tableau nu : l'enveloppe reelle {ok, schema_version, data}
+// des CLIs, le Listing Reddit (data.data.children, chaque post sous child.data)
+// et le tableau twitter sous data.
 function extractItems(raw: string): any[] {
   const trimmed = raw.trim();
   let data: any;
@@ -51,12 +60,36 @@ function extractItems(raw: string): any[] {
     const start = trimmed.search(/[[{]/);
     const end = Math.max(trimmed.lastIndexOf("]"), trimmed.lastIndexOf("}"));
     if (start < 0 || end <= start) return [];
-    data = JSON.parse(trimmed.slice(start, end + 1));
+    try {
+      data = JSON.parse(trimmed.slice(start, end + 1));
+    } catch {
+      return [];
+    }
   }
-  if (Array.isArray(data)) return data;
-  for (const k of ["items", "data", "results", "posts", "tweets", "children"]) {
-    if (Array.isArray(data?.[k])) return data[k];
+  return normalizeItems(data);
+}
+
+// Un child Reddit est enveloppe { kind, data:{...} } -> on rend le .data reel.
+function unwrapChild(item: any): any {
+  return item && item.kind && item.data && typeof item.data === "object" ? item.data : item;
+}
+
+function normalizeItems(data: any, depth = 0): any[] {
+  if (data == null || depth > 4) return [];
+  if (Array.isArray(data)) return data.map(unwrapChild);
+  // Listing Reddit : children a la racine ou sous .data
+  const children = Array.isArray(data.children)
+    ? data.children
+    : Array.isArray(data?.data?.children)
+      ? data.data.children
+      : null;
+  if (children) return children.map(unwrapChild);
+  // Tableau direct sous une cle courante
+  for (const k of ["items", "data", "results", "posts", "tweets"]) {
+    if (Array.isArray(data[k])) return data[k].map(unwrapChild);
   }
+  // Enveloppe {ok, data:{...}} -> on descend d'un cran
+  if (data.data && typeof data.data === "object") return normalizeItems(data.data, depth + 1);
   return [];
 }
 
@@ -79,14 +112,49 @@ function toIso(v: string | null): string | null {
   return Number.isNaN(t) ? null : new Date(t).toISOString();
 }
 
+// author peut etre une string (fixtures, rdt) OU un objet (twitter: {screenName,name}).
+function pickAuthor(item: any): string {
+  const a = item?.author ?? item?.user;
+  if (a && typeof a === "object") {
+    return pick(a, ["screenName", "screen_name", "username", "name", "handle"]) ?? "unknown";
+  }
+  return pick(item, ["author", "user", "username", "author_name", "screen_name", "by"]) ?? "unknown";
+}
+
+// Reddit : le signal est titre + corps (le corps est vide sur un post-lien).
+function contentFor(connector: ConnectorName, item: any): string | null {
+  if (connector === "reddit") {
+    const title = pick(item, ["title"]);
+    const body = pick(item, ["selftext", "body", "text"]);
+    if (title && body) return `${title}\n\n${body}`;
+    return title ?? body ?? pick(item, ["content", "full_text"]);
+  }
+  return pick(item, ["text", "full_text", "content", "body", "selftext", "title"]);
+}
+
+// URL vers la DISCUSSION : permalink Reddit (relatif -> absolu), permalink tweet
+// reconstruit depuis author+id si absent (le champ `urls` = liens cites, pas le tweet).
+function buildUrl(connector: ConnectorName, item: any, author: string, externalId: string): string {
+  if (connector === "reddit") {
+    const p = pick(item, ["permalink"]);
+    if (p) return p.startsWith("http") ? p : `https://www.reddit.com${p}`;
+    return pick(item, ["url", "link"]) ?? "";
+  }
+  const direct = pick(item, ["url", "tweet_url", "permalink", "link"]);
+  if (direct) return direct;
+  if (author !== "unknown" && externalId) return `https://x.com/${author}/status/${externalId}`;
+  return "";
+}
+
 // Mappe un item brut (champs heterogenes selon l'outil) vers un RawPost.
 function mapItem(connector: ConnectorName, item: any): RawPost | null {
-  const content = pick(item, ["text", "content", "body", "selftext", "title", "full_text"]);
+  const content = contentFor(connector, item);
   if (!content) return null;
-  const author = pick(item, ["author", "user", "username", "author_name", "screen_name", "by"]) ?? "unknown";
-  const url = pick(item, ["url", "permalink", "link", "tweet_url"]) ?? "";
+  const author = pickAuthor(item);
   const externalId = pick(item, ["id", "id_str", "name"]) ?? String(Math.random()).slice(2);
-  const publishedAt = toIso(pick(item, ["created_at", "created_utc", "date", "timestamp", "time"]));
+  const publishedAt = toIso(
+    pick(item, ["created_at", "created_utc", "createdAtISO", "createdAt", "createdAtLocal", "date", "timestamp", "time", "created"]),
+  );
   const sub = pick(item, ["subreddit", "subreddit_name_prefixed"]);
   const sourceKey =
     connector === "reddit"
@@ -96,6 +164,7 @@ function mapItem(connector: ConnectorName, item: any): RawPost | null {
           : `r/${sub}`
         : "reddit"
       : "x";
+  const url = buildUrl(connector, item, author, externalId);
   return { connector, sourceKey, externalId, author, content, url, publishedAt };
 }
 
