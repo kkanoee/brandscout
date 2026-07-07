@@ -7,6 +7,9 @@ PRAGMA foreign_keys = ON;
 CREATE TABLE IF NOT EXISTS brand (
   id         INTEGER PRIMARY KEY,
   name       TEXT NOT NULL UNIQUE,
+  -- Handles officiels de la marque (CSV), ex. "ChartAcademyx". Leurs Posts sont
+  -- marques "official" (auto-promo) et exclus de la corroboration de Confidence.
+  official_handles TEXT,
   created_at TEXT NOT NULL
 );
 
@@ -49,6 +52,10 @@ CREATE TABLE IF NOT EXISTS post (
   context_url     TEXT,
   published_at    TEXT,
   collected_at    TEXT NOT NULL,
+  -- external_id du Post parent si ce Post est un commentaire/reponse (profondeur).
+  parent_external_id TEXT,
+  -- 1 si l'auteur est un handle officiel de la marque (auto-promo).
+  author_official INTEGER NOT NULL DEFAULT 0,
   kept            INTEGER NOT NULL DEFAULT 1,
   filtered_reason TEXT
 );

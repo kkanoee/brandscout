@@ -10,6 +10,9 @@ export function seedDemo(): Brand {
     repo.addTarget(brand.id, "seed_source", "reddit", "Forex", "r/Forex");
     repo.addTarget(brand.id, "keyword_query", "reddit", "Chart Fanatics", "mentions");
     repo.addTarget(brand.id, "seed_source", "youtube", "Chart Fanatics", "YouTube channel");
+    // Compte officiel de la marque : ses propres posts seront marques "official"
+    // et exclus de la corroboration de Confidence (auto-promo).
+    repo.setBrandOfficialHandles(brand.id, ["ChartFanatics"]);
   }
-  return brand;
+  return repo.getBrand(brand.id)!;
 }

@@ -65,13 +65,22 @@ $("#addBrandBtn").onclick = async () => {
   await loadBrands(b.id);
 };
 $("#seedBtn").onclick = async () => { const r = await api.post("/api/seed"); await loadBrands(r.brandId); };
+$("#saveOfficialBtn").onclick = async () => {
+  if (!state.brandId) return;
+  const handles = $("#officialHandles").value.split(",").map((s) => s.trim()).filter(Boolean);
+  await api.post(`/api/brands/${state.brandId}/official`, { handles });
+  await loadBrands(state.brandId);
+  $("#saveOfficialBtn").textContent = "Saved ✓";
+  setTimeout(() => { $("#saveOfficialBtn").textContent = "Save official"; }, 1500);
+};
 
 // --- Targets -----------------------------------------------------------------
 function renderTargets() {
   const brand = state.brands.find((b) => b.id === state.brandId);
   const tbody = $("#targetsTable tbody");
   tbody.innerHTML = "";
-  if (!brand) return;
+  if (!brand) { $("#officialHandles").value = ""; return; }
+  $("#officialHandles").value = (brand.officialHandles || []).join(", ");
   for (const t of brand.targets) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -275,6 +284,10 @@ function renderFinding(f) {
   const obs = f.observations.map((o) => {
     const p = o.post;
     const link = p ? `<a href="${escapeAttr(p.url)}" target="_blank" rel="noopener">${escapeHtml(p.sourceKey)} · ${escapeHtml(p.author)}</a>` : "unknown source";
+    const flags = p ? [
+      p.authorOfficial ? '<span class="tag-official" title="Official brand account — self-promo, excluded from confidence corroboration">official</span>' : "",
+      p.isReply ? '<span class="tag-reply" title="Reply / comment under a publication">↳ reply</span>' : "",
+    ].join("") : "";
     const date = p && p.publishedAt ? new Date(p.publishedAt).toLocaleDateString() : "";
     // Contexte : de quelle video / quel thread provient le commentaire.
     let ctx = "";
@@ -286,7 +299,7 @@ function renderFinding(f) {
     return `<div class="obs">
         <div class="claim">${escapeHtml(o.claim)}<span class="sent ${o.sentiment}">${o.sentiment}</span></div>
         ${ctx}
-        <div class="src">${link} ${date ? "· " + date : ""}</div>
+        <div class="src">${link} ${flags} ${date ? "· " + date : ""}</div>
         ${p ? `<div class="post-quote">${escapeHtml(p.content)}</div>` : ""}
       </div>`;
   }).join("");

@@ -1,11 +1,14 @@
 // Abstraction Connecteur : module d'integration propre a une plateforme qui
 // implemente un ou plusieurs Collection Modes. Le modele de donnees reste
 // agnostique du connecteur (CONTEXT.md). v1 : YouTube (seed_source), Reddit (les deux).
-import type { CollectionTarget, RawPost, ConnectorName } from "../domain/types.ts";
+import type { CollectionTarget, RawPost, ConnectorName, Post } from "../domain/types.ts";
 
 export interface CollectOptions {
   windowMonths: number;
   volumeCap: number;
+  // Nom de la Brand analysee. Sert a filtrer une seed source tierce a la
+  // pertinence marque (chercher la marque DANS la communaute, pas la ratisser).
+  brand: string;
 }
 
 export interface Connector {
@@ -13,6 +16,17 @@ export interface Connector {
   // Modes supportes par ce connecteur en v1.
   supports(mode: CollectionTarget["mode"]): boolean;
   collect(target: CollectionTarget, opts: CollectOptions): Promise<RawPost[]>;
+  // Profondeur (optionnel) : commentaires/reponses d'une publication deja collectee.
+  // Les RawPost renvoyes ont parentExternalId = post.externalId.
+  fetchReplies?(post: Post, opts: { max: number }): Promise<RawPost[]>;
+}
+
+// Recherche par PHRASE exacte quand la requete a plusieurs mots : sans guillemets,
+// les moteurs (Reddit, twitter-cli) eclatent "Chart Academy" en OR et matchent
+// "chart" / "academy" separement (bruit : Academy Award, Binance Academy...).
+export function asPhrase(q: string): string {
+  const t = q.trim();
+  return /\s/.test(t) ? `"${t}"` : t;
 }
 
 // Borne temporelle : timestamp ISO du debut de fenetre.

@@ -47,6 +47,13 @@ export function deleteTarget(id: number) {
   return { ok: true };
 }
 
+// Handles officiels de la marque (compte auto-promo). Champ explicite (decision produit).
+export function setOfficialHandles(brandId: number, handles: string[]) {
+  if (!repo.getBrand(brandId)) throw new HttpError(404, "Brand not found.");
+  const list = Array.isArray(handles) ? handles.filter((h) => typeof h === "string") : [];
+  return repo.setBrandOfficialHandles(brandId, list);
+}
+
 export function startRun(brandId: number) {
   const brand = repo.getBrand(brandId);
   if (!brand) throw new HttpError(404, "Brand not found.");
@@ -105,6 +112,8 @@ export function getRunDetail(runId: number) {
               contextUrl: post.contextUrl,
               content: post.content,
               publishedAt: post.publishedAt,
+              authorOfficial: post.authorOfficial,
+              isReply: post.parentExternalId != null,
             }
           : null,
       };

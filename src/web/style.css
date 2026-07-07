@@ -169,3 +169,7 @@ button.ghost { background: transparent; color: var(--muted); }
 .sent.negative { color: var(--neg); }
 .sent.neutral, .sent.mixed { color: var(--muted); }
 .post-quote { font-size: 12px; color: #aeb6c4; margin-top: 4px; padding: 6px 8px; background: #0b0d11; border-radius: 5px; }
+.tag-official { font-size: 10px; padding: 1px 6px; border-radius: 10px; margin-left: 6px;
+  background: rgba(210,153,34,.18); color: var(--signal); border: 1px solid rgba(210,153,34,.4); font-weight: 600; }
+.tag-reply { font-size: 10px; padding: 1px 6px; border-radius: 10px; margin-left: 4px;
+  background: rgba(91,157,255,.14); color: var(--accent); border: 1px solid rgba(91,157,255,.35); }

@@ -4,6 +4,7 @@ import { readFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { config } from "../config.ts";
+import { parseHandles, isOfficialAuthor } from "../domain/official.ts";
 import type {
   Brand,
   CollectionTarget,
@@ -40,6 +41,9 @@ export function getDb(): Database.Database {
 function migrate(d: Database.Database): void {
   ensureColumn(d, "post", "context_title", "TEXT");
   ensureColumn(d, "post", "context_url", "TEXT");
+  ensureColumn(d, "brand", "official_handles", "TEXT");
+  ensureColumn(d, "post", "parent_external_id", "TEXT");
+  ensureColumn(d, "post", "author_official", "INTEGER NOT NULL DEFAULT 0");
   relaxConnectorCheck(d);
 }
 
@@ -90,7 +94,12 @@ const now = (): string => new Date().toISOString();
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function mapBrand(r: any): Brand {
-  return { id: r.id, name: r.name, createdAt: r.created_at };
+  return {
+    id: r.id,
+    name: r.name,
+    officialHandles: parseHandles(r.official_handles),
+    createdAt: r.created_at,
+  };
 }
 function mapTarget(r: any): CollectionTarget {
   return {
@@ -129,6 +138,8 @@ function mapPost(r: any): Post {
     url: r.url,
     contextTitle: r.context_title ?? null,
     contextUrl: r.context_url ?? null,
+    parentExternalId: r.parent_external_id ?? null,
+    authorOfficial: !!r.author_official,
     publishedAt: r.published_at ?? null,
     collectedAt: r.collected_at,
     kept: !!r.kept,
@@ -192,6 +203,14 @@ export const repo = {
       .prepare("SELECT * FROM brand ORDER BY name")
       .all()
       .map(mapBrand);
+  },
+  // Handles officiels (CSV normalise). Ecrase la valeur precedente.
+  setBrandOfficialHandles(brandId: number, handles: string[]): Brand | null {
+    const csv = handles.map((h) => h.replace(/^@+/, "").trim()).filter(Boolean).join(", ");
+    getDb()
+      .prepare("UPDATE brand SET official_handles = ? WHERE id = ?")
+      .run(csv || null, brandId);
+    return this.getBrand(brandId);
   },
 
   // Targets
@@ -263,13 +282,16 @@ export const repo = {
     runId: number,
     targetId: number | null,
     posts: RawPost[],
+    officialHandles: string[] = [],
   ): Post[] {
     const d = getDb();
     const stmt = d.prepare(
       `INSERT INTO post (run_id, target_id, connector, source_key, external_id,
-         author, content, url, context_title, context_url, published_at, collected_at, kept, filtered_reason)
+         author, content, url, context_title, context_url, parent_external_id,
+         author_official, published_at, collected_at, kept, filtered_reason)
        VALUES (@run_id, @target_id, @connector, @source_key, @external_id,
-         @author, @content, @url, @context_title, @context_url, @published_at, @collected_at, 1, NULL)`,
+         @author, @content, @url, @context_title, @context_url, @parent_external_id,
+         @author_official, @published_at, @collected_at, 1, NULL)`,
     );
     const collectedAt = now();
     const ids: number[] = [];
@@ -286,6 +308,8 @@ export const repo = {
           url: p.url,
           context_title: p.contextTitle ?? null,
           context_url: p.contextUrl ?? null,
+          parent_external_id: p.parentExternalId ?? null,
+          author_official: isOfficialAuthor(p.author, officialHandles) ? 1 : 0,
           published_at: p.publishedAt,
           collected_at: collectedAt,
         });

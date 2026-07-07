@@ -181,6 +181,45 @@ export async function cliSearch(
     .filter((p): p is RawPost => p !== null);
 }
 
+// Extrait les commentaires t1 d'une sortie `rdt read` : {data:[postListing, commentsListing]}.
+function extractRedditComments(raw: string): any[] {
+  let data: any;
+  try {
+    data = JSON.parse(raw.trim());
+  } catch {
+    return [];
+  }
+  const listings = Array.isArray(data?.data) ? data.data : [data?.data].filter(Boolean);
+  const out: any[] = [];
+  for (const listing of listings) {
+    for (const ch of listing?.data?.children ?? []) {
+      if (ch?.kind === "t1" && ch?.data?.body) out.push(ch.data);
+    }
+  }
+  return out;
+}
+
+// Commentaires (Reddit `read`) / reponses (X `tweet`) d'une publication -> RawPost[].
+export async function cliReplies(
+  connector: ConnectorName,
+  bin: string,
+  parentId: string,
+  extraArgs: string[] = [],
+): Promise<RawPost[]> {
+  if (connector === "x") {
+    const raw = await runCli(bin, ["tweet", parentId, "--json", ...extraArgs]);
+    // data[] = [tweet original, ...reponses] : on retire l'original par son id.
+    return extractItems(raw)
+      .filter((it) => String(it?.id ?? it?.id_str ?? "") !== String(parentId))
+      .map((it) => mapItem(connector, it))
+      .filter((p): p is RawPost => p !== null);
+  }
+  const raw = await runCli(bin, ["read", parentId, "--json", ...extraArgs]);
+  return extractRedditComments(raw)
+    .map((it) => mapItem(connector, it))
+    .filter((p): p is RawPost => p !== null);
+}
+
 // Exporte le mapping pur pour les tests (sans spawn).
 export function __mapItems(connector: ConnectorName, raw: string): RawPost[] {
   return extractItems(raw)

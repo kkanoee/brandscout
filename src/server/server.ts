@@ -96,6 +96,13 @@ async function handleApi(
   if (method === "DELETE" && (m = path.match(/^\/api\/targets\/(\d+)$/))) {
     return sendJson(res, 200, api.deleteTarget(Number(m[1])));
   }
+  if (method === "POST" && (m = path.match(/^\/api\/brands\/(\d+)\/official$/))) {
+    const body = await readBody(req);
+    const handles = Array.isArray(body.handles)
+      ? body.handles
+      : String(body.handles ?? "").split(",");
+    return sendJson(res, 200, api.setOfficialHandles(Number(m[1]), handles));
+  }
   if (method === "POST" && path === "/api/runs") {
     const body = await readBody(req);
     if (!body.brandId) throw new HttpError(400, "brandId required.");

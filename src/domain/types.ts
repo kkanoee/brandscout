@@ -32,6 +32,8 @@ export type ReportSection =
 export interface Brand {
   id: number;
   name: string;
+  // Handles officiels de la marque (ex. ["ChartAcademyx"]). Saisis par l'utilisateur.
+  officialHandles: string[];
   createdAt: string;
 }
 
@@ -83,6 +85,10 @@ export interface Post {
   // thread Reddit... Permet de savoir de quelle video parle une Observation.
   contextTitle: string | null;
   contextUrl: string | null;
+  // external_id du Post parent si celui-ci est un commentaire/reponse (profondeur).
+  parentExternalId: string | null;
+  // Auteur = handle officiel de la marque (auto-promo). Marque mais exclu de la corroboration.
+  authorOfficial: boolean;
   publishedAt: string | null;
   collectedAt: string;
   kept: boolean;
@@ -132,5 +138,7 @@ export interface RawPost {
   url: string;
   contextTitle?: string | null;
   contextUrl?: string | null;
+  // Renseigne pour un commentaire/reponse : external_id du Post parent.
+  parentExternalId?: string | null;
   publishedAt: string | null;
 }

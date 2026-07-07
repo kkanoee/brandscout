@@ -27,6 +27,7 @@ export function computeConfidence(
   for (const o of observations) {
     const p = posts.get(o.postId);
     if (!p) continue;
+    if (p.authorOfficial) continue; // auto-promo : montree, mais pas une preuve tierce
     authors.add(p.author.toLowerCase()); // 1 auteur = 1 voix
     sources.add(p.sourceKey);
   }
