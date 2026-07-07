@@ -32,12 +32,12 @@ export const config = {
   mode,
 
   llm: {
-    mechanicalModel: str("LLM_MECHANICAL_MODEL", "openrouter/owl-alpha"),
+    mechanicalModel: str("LLM_MECHANICAL_MODEL", "deepseek/deepseek-v4-flash"),
     judgmentModel: str("LLM_JUDGMENT_MODEL", "claude-opus-4-8"),
     // Backend du jugement : auto | anthropic | openrouter | mock (cf. router.ts).
     judgmentProvider: str("LLM_JUDGMENT_PROVIDER", "auto"),
     // Modele OpenRouter utilise si le jugement passe en mode gratuit.
-    judgmentOpenrouterModel: str("LLM_JUDGMENT_OPENROUTER_MODEL", "openrouter/owl-alpha"),
+    judgmentOpenrouterModel: str("LLM_JUDGMENT_OPENROUTER_MODEL", "deepseek/deepseek-v4-flash"),
     openrouterApiKey: str("OPENROUTER_API_KEY"),
     anthropicApiKey: str("ANTHROPIC_API_KEY"),
   },

@@ -5,7 +5,7 @@ import type { Post, Observation, Sentiment, ObservationKind } from "../domain/ty
 import { repo } from "../db/db.ts";
 import { getMechanical, parseJson } from "../llm/router.ts";
 
-const BATCH = 40;
+const BATCH = 20;
 
 const SENTIMENTS: Sentiment[] = ["positive", "negative", "neutral", "mixed"];
 const KINDS: ObservationKind[] = ["critique", "praise", "theme", "mention"];
@@ -67,9 +67,17 @@ export async function extract(runId: number, posts: Post[]): Promise<Observation
       system: SYSTEM,
       user: buildPrompt(batch),
       json: true,
-      maxTokens: 4000,
+      maxTokens: 8000,
     });
-    const parsed = parseJson<{ observations: RawObs[] }>(raw);
+    // Un batch dont la sortie LLM est illisible (tronquee irrecuperable, non-JSON)
+    // ne doit PAS tuer le Run : on saute ce batch et on continue.
+    let parsed: { observations: RawObs[] };
+    try {
+      parsed = parseJson<{ observations: RawObs[] }>(raw);
+    } catch (e) {
+      console.warn(`extract: batch ${i / BATCH} ignore (JSON illisible): ${(e as Error).message}`);
+      continue;
+    }
     for (const o of parsed.observations ?? []) {
       if (!byId.has(o.postId)) continue; // garde-fou : post hors batch
       if (!o.claim || !o.claim.trim()) continue;

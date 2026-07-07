@@ -170,7 +170,53 @@ export function __setProviders(m: LlmProvider | null, j: LlmProvider | null): vo
   judgment = j;
 }
 
-// Extrait le premier objet/array JSON d'une reponse LLM (tolere le texte autour).
+// Repare un JSON tronque (sortie LLM coupee a max_tokens) : coupe apres le
+// dernier element complet et referme les conteneurs encore ouverts. Renvoie null
+// si rien de recuperable. Ignore le contenu des strings (guillemets echappes).
+function repairTruncatedJson(s: string): string | null {
+  let inStr = false;
+  let esc = false;
+  const stack: string[] = [];
+  let lastSafe = -1; // index (inclus) d'une fin d'element complet a l'interieur d'un conteneur
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === "\\") esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') inStr = true;
+    else if (c === "{" || c === "[") stack.push(c === "{" ? "}" : "]");
+    else if (c === "}" || c === "]") {
+      if (stack.length) stack.pop();
+      if (stack.length >= 1) lastSafe = i; // element ferme, encore dans un conteneur
+    }
+  }
+  if (lastSafe < 0) return null;
+  const head = s.slice(0, lastSafe + 1);
+  // recalcule les conteneurs restes ouverts sur head, puis les referme
+  const open: string[] = [];
+  let is = false;
+  let es = false;
+  for (let i = 0; i < head.length; i++) {
+    const c = head[i];
+    if (is) {
+      if (es) es = false;
+      else if (c === "\\") es = true;
+      else if (c === '"') is = false;
+      continue;
+    }
+    if (c === '"') is = true;
+    else if (c === "{") open.push("}");
+    else if (c === "[") open.push("]");
+    else if (c === "}" || c === "]") open.pop();
+  }
+  return head + open.reverse().join("");
+}
+
+// Extrait le premier objet/array JSON d'une reponse LLM (tolere le texte autour
+// et une sortie tronquee a max_tokens).
 export function parseJson<T>(raw: string): T {
   const trimmed = raw.trim();
   try {
@@ -183,8 +229,14 @@ export function parseJson<T>(raw: string): T {
       const close = open === "[" ? "]" : "}";
       const end = trimmed.lastIndexOf(close);
       if (end > start) {
-        return JSON.parse(trimmed.slice(start, end + 1)) as T;
+        try {
+          return JSON.parse(trimmed.slice(start, end + 1)) as T;
+        } catch {
+          // sortie probablement tronquee : on tente une reparation
+        }
       }
+      const repaired = repairTruncatedJson(trimmed.slice(start));
+      if (repaired) return JSON.parse(repaired) as T;
     }
     throw new Error(`Reponse LLM non-JSON: ${trimmed.slice(0, 200)}`);
   }
